@@ -1,0 +1,114 @@
+:root{
+  --sidemenuWidth: 400px;
+}
+
+.sidemenuWrapper{
+  position: absolute;
+  left: 100%;
+  top: 0%;
+  width: 0%;
+  height: 100%;
+
+  user-select: none;
+  font-family: sans-serif;
+}
+
+.sidemenuBody{
+  position: relative;
+  text-align: center;
+  left: calc(0px - var(--sidemenuWidth));
+  top: -50px;
+  width: var(--sidemenuWidth);
+  height: 100%;
+  background-color: #404040;
+  color: #f2f2f2;
+  overflow: hidden;
+  transition: all 1s ease;
+}
+
+.sidemenuCategory{
+  padding-left: 0px;
+  margin-top: 0px;
+  padding-top: 0px;
+}
+
+.sidemenuCategory > li{
+  line-height: 50px;
+  border-top: 1px solid rgba(255,255,255,0.1);
+  border-bottom: 1px solid #333;
+  transition: all 0.3s ease;
+  list-style: none;
+}
+
+.sidemenuCategory > li:hover{
+  border-top: 1px solid transparent;
+  border-bottom: 1px solid transparent;
+  box-shadow: 0 0px 10px 3px #222;
+}
+
+.sidemenuCategory > li > label > div{
+  width: 100%;
+  line-height: 50px;
+}
+
+.sidemenuCategoryLabel{
+  background-color: #404040;
+}
+
+.sidemenuCategory > li > input:checked ~ div{
+  position: relative;
+  left: 0px;
+
+  position: absolute;
+  top: 80px;
+}
+
+.sidemenuCategory > li > input ~ div{
+  background-color: #666666;
+  overflow-y: hidden;
+  transition: all 0.6s ease;
+
+  position: relative;
+  height: calc(100% - 80px);
+  width: 100%;
+  left: 100%;
+
+  position: absolute;
+  top: 80px;
+}
+
+.sidemenuTitle{
+  padding: 40px;
+  font-size: 40px;
+  line-height: 0px;
+  background-color: #333;
+
+}
+
+#showBtnIcon > div{
+  position: relative;
+  left: calc(0px - var(--sidemenuWidth) - 70px);
+  top: 30px;
+  width: 50px;
+  height: 50px;
+  font-size: 50px;
+  background-color: rgba(240, 240, 240, 0.6);
+  color: rgba(200, 200, 200, 0.6);
+  border-radius: 5px;
+  transition: all 1s ease;
+  transform: rotate(180deg);
+}
+
+#showBtn:checked ~ .sidemenuBody{
+  left: 0px;
+}
+
+#showBtn:checked ~ #showBtnIcon > div{
+  left: -70px;
+  transform: rotate(0deg);
+}
+
+#showBtnIcon > div > span{
+  position: relative;
+  transform: translateX(-50%) translateY(50%);
+}

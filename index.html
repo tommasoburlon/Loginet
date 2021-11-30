@@ -1,0 +1,137 @@
+<html>
+
+<head>
+
+<link rel="stylesheet" href="CSS/sidemenu.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css"/>
+
+<script src = "JS/Algorithm/heap.js"></script>
+<script src = "JS/Algorithm/queue.js"></script>
+<script src = "JS/Algorithm/stack.js"></script>
+
+<script src = "JS/Node/Node.js"></script>
+<script src = "JS/Node/Environment.js"></script>
+
+<script src = "JS/Node/Source.js"></script>
+<script src = "JS/Node/QueueTheory/FIFONode.js"></script>
+<script src = "JS/Node/QueueTheory/LIFONode.js"></script>
+<script src = "JS/Node/Logger.js"></script>
+
+<script src = "JS/Node/Wire.js"></script>
+
+<script src = "JS/GUI/GUI.js"></script>
+
+<script src = "JS/GMath/vec.js"></script>
+
+<script src = "JS/utility.js"></script>
+
+
+<script>
+
+let env, gui, mouse = {x : 0, y : 0, click : false, clicked : null};
+
+window.addEventListener('load', function(){
+  let cnv, c;
+
+  cnv = document.getElementById("myCanvas");
+
+  env = new Environment();
+  gui = new GUI(cnv, env);
+
+  let gn, w;
+  gn = new GSourceNode(new SourceNode(env));
+  gui.insertNode(gn);
+
+  gn = new GLoggerNode(new LoggerNode(env));
+  gui.insertNode(gn);
+
+  gn = new GFIFONode(new FIFONode(env));
+  gui.insertNode(gn);
+
+  w = new Wire();
+  w.start.position = new vec3(100, 100);
+  w.end.position = new vec3(500, 200);
+  gui.insertWire(w);
+  gui.render();
+
+  /*for(let obj of nodePrototypes){
+    let HTMLparent = document.getElementById(obj.category + " div");
+    if(!HTMLparent){
+      let el = document.createElement("div");
+      el.id = obj.category + " div";
+      el.className = "menuItem";
+      el.innerHTML = obj.category;
+      document.getElementById("nodeList").appendChild(el);
+      HTMLparent = el;
+    }
+    let el = document.createElement("div");
+    el.id = obj.name + " div";
+    el.innerHTML = obj.name;
+    HTMLparent.appendChild(el);
+
+  }*/
+});
+
+</script>
+
+</head>
+
+<body style = "overflow:hidden">
+
+<canvas id = "myCanvas" style = "position:absolute; top: 0; left : 0; width : 100%; height : 100%"></canvas>
+
+<div class = "sidemenuWrapper">
+  <input type="checkbox" id = "showBtn" hidden>
+  <label for="showBtn" id = "showBtnIcon">
+    <div>
+      <span>&#x27a4;</span>
+    </div>
+  </label>
+  <div id = "nodeList" class = "sidemenuBody">
+    <nav id="sidebar">
+      <div class="sidemenuTitle">
+        Nodes
+      </div>
+      <ul class="sidemenuCategory">
+
+        <li>
+          <input type = "checkbox" id = "checkboxCategory1" hidden>
+          <label for = "checkboxCategory1">
+            <div class = "sidemenuCategoryLabel">category1</div>
+          </label>
+          <div>
+            <ul class="sidemenuCategory">
+              <li>
+                <label for = "checkboxCategory1">
+                  <div class = "sidemenuCategoryLabel">
+                    < category1
+                  </div>
+                </label>
+              </li>
+              <li>item1</li>
+              <li>item2</li>
+            </ul>
+          </div>
+        </li>
+
+        <li>
+          <input type = "checkbox" id = "checkboxCategory2" hidden>
+          <label for = "checkboxCategory2">
+            <div>category2</div>
+          </label>
+          <div>
+            <ul>
+              <li>item3</li>
+              <li>item4</li>
+            </ul>
+          </div>
+        </li>
+
+      </ul>
+    </nav>
+  </div>
+</div>
+
+</body>
+
+</html>
