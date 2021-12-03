@@ -39,9 +39,66 @@ class LIFONode extends Node{
 class GLIFONode extends GNode{
   constructor(_node){
     super(_node);
+
+    this.size = new vec3(100, 200);
+    this.pins[0].position = new vec3(0, 0);
+    this.pins[0].nameLocation = [1, 1];
+    this.pins[0].name = "in";
+
+    this.pins[1].position = new vec3(100, 0);
+    this.pins[1].nameLocation = [-1, 1];
+    this.pins[1].name = "out";
   }
 
   draw(cnv, ctx){
+    let ratio = 0.75;
+
+    ctx.fillStyle = "rgb(230, 230, 230)";
+    ctx.strokeStyle = "black";
+
+    ctx.beginPath();
+    ctx.rect(0, (1 - ratio) * this.size.y, this.size.x, ratio * this.size.y);
+    ctx.stroke();
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.arc(this.size.x - 0.5 * (1 - ratio) * this.size.y, 0.6 * (1 - ratio) * this.size.y, 0.4 * (1 - ratio) * this.size.y, 0, 2 * Math.PI);
+    ctx.stroke();
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.lineTo(this.size.x * 0.25, 0);
+    ctx.lineTo(this.size.x * 0.25, 0.25 * this.size.y);
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(this.size.x, 0);
+    ctx.lineTo(this.size.x * 0.75, 0);
+    ctx.lineTo(this.size.x * 0.75, 0.2 * (1 - ratio) * this.size.y);
+    ctx.stroke();
+
+    ctx.fillStyle = "black";
+    ctx.font = Math.floor(0.6 * (1 - ratio) * this.size.y) + "px Courier New";
+    let txtSize = ctx.measureText("\u{03BB}");
+    ctx.fillText("\u{03BB}", this.size.x - 0.5 * (1 - ratio) * this.size.y - txtSize.width * 0.4, 0.6 * (1 - ratio) * this.size.y + 0.4 * (1 - ratio) * this.size.x);
+
+    if(!this.node.params.isInfinite){
+      ctx.fillStyle = "yellow";
+      ctx.fillRect(ratio * this.size.x, 0, -(this.node.queue.size() / this.node.params.queueSize) * ratio * this.size.x, this.size.y);
+
+      let cols = 6;
+      for(let i = 1; i < cols; i++){
+        ctx.beginPath();
+        ctx.moveTo(0, Math.floor((i / cols) * ratio * this.size.y + (1 - ratio) * this.size.y));
+        ctx.lineTo(this.size.x, Math.floor((i / cols) * ratio * this.size.y + (1 - ratio) * this.size.y));
+        ctx.stroke();
+      }
+    }else{
+      ctx.font = Math.floor(this.size.x) + "px Courier New";
+      let txtSize = ctx.measureText("\u{221E}");
+      ctx.fillText("\u{221E}", 0.5 * this.size.x - 0.5 * txtSize.width, 0.75 * this.size.y);
+    }
 
   }
 }

@@ -3,7 +3,7 @@
 }
 
 .sidemenuWrapper{
-  position: absolute;
+  position: relative;
   left: 100%;
   top: 0%;
   width: 0%;
@@ -60,7 +60,7 @@
   left: 0px;
 
   position: absolute;
-  top: 80px;
+  top: 0px;
 }
 
 .sidemenuCategory > li > input ~ div{
@@ -69,12 +69,12 @@
   transition: all 0.6s ease;
 
   position: relative;
-  height: calc(100% - 80px);
+  height: calc(100% - 0px);
   width: 100%;
   left: 100%;
 
   position: absolute;
-  top: 80px;
+  top: 0px;
 }
 
 .sidemenuTitle{
@@ -85,7 +85,7 @@
 
 }
 
-#showBtnIcon > div{
+.sidemenuShowBtnLabel > div{
   position: relative;
   left: calc(0px - var(--sidemenuWidth) - 70px);
   top: 30px;
@@ -99,16 +99,16 @@
   transform: rotate(180deg);
 }
 
-#showBtn:checked ~ .sidemenuBody{
+.sidemenuShowBtn:checked ~ .sidemenuBody{
   left: 0px;
 }
 
-#showBtn:checked ~ #showBtnIcon > div{
+.sidemenuShowBtn:checked ~ .sidemenuShowBtnLabel > div{
   left: -70px;
   transform: rotate(0deg);
 }
 
-#showBtnIcon > div > span{
+.sidemenuShowBtn > div > span{
   position: relative;
   transform: translateX(-50%) translateY(50%);
 }

@@ -28,10 +28,10 @@ class GUI{
 
   render(){
     this.ctx.clearRect(0, 0, this.cnv.width, this.cnv.height);
-    for(let n of this.gnodes)
-      n.render(this.cnv, this.ctx);
-    for(let w of this.wires)
-      w.render(this.cnv, this.ctx);
+    for(let i = this.gnodes.length - 1; i >= 0; i--)
+      this.gnodes[i].render(this.cnv, this.ctx);
+    for(let i = this.wires.length - 1; i >= 0; i--)
+      this.wires[i].render(this.cnv, this.ctx);
 
     this.env.execute();
 
