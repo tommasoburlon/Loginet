@@ -1,4 +1,4 @@
-let paramType = {INTEGER : 0, FLOAT : 1, BOOLEAN : 2, CHAR : 3, ARRAY : 4, OBJECT : 5, CODE : 6};
+let paramType = {INTEGER : 0, FLOAT : 1, BOOLEAN : 2, CHAR : 3, ARRAY : 4, OBJECT : 5, CODE : 6, CONSTANT : 7};
 
 class Metaparameter{
   constructor(_type, _def, _isOk){
@@ -7,6 +7,16 @@ class Metaparameter{
     this.isOk = _isOk;
   }
 }
+
+class NodeMetadata{
+  constructor(name, category, metaparams, builder, desc = ""){
+    this.name = name;
+    this.builder = builder;
+    this.category = category;
+    this.metaparams = metaparams;
+    this.desc = desc;
+  }
+};
 
 class Link{
   constructor(_nodeIn = undefined, _idxIn = 0, _nodeOut = undefined, _idxOut = 0){
@@ -20,10 +30,10 @@ class Link{
 
 // class that contains the logic of one node
 class Node{
-  constructor(_env){
+  constructor(_env, _metadata){
     this.state = {};
     this.params = {};
-    this.metaparams = {};
+    this.metadata = _metadata;
     this.env = _env;
     this.env.insertNode(this);
 
@@ -37,12 +47,20 @@ class Node{
 
   reset(){
     this.params = {};
-    for(let i in this.metaparams)
-      this.params[i] = this.metaparams[i].def;
+    for(let i in this.metadata.metaparams)
+      this.params[i] = this.metadata.metaparams[i].def;
+    this.resetLinks();
+  }
+
+  reload(){
     this.resetLinks();
   }
 
   resetLinks(){
+    for(let i in this.links){
+      this.disconnect(i);
+    }
+
     this.links = new Array((this.params.nInput || 0) + (this.params.nOutput || 0));
 
     for(let i in this.links)
@@ -144,6 +162,8 @@ class GNode{
     this.pins = [];
     for(let i = 0; i < this.node.links.length; i++)
       this.pins.push(new Pin(new vec3(), this, "X_" + i, [1, 1]));
+
+    this.metadata = _node.metadata;
   }
 
   draw(cnv, ctx){
@@ -175,8 +195,8 @@ class GNode{
 
 }
 
-let nodePrototypes = [];
+let nodesData = [];
 
-function registerNode(_name, _builder, _category, _description = ""){
-  nodePrototypes.push({name : _name, builderFunc : _builder, category: _category, desc: _description});
+function registerNode(_metadata){
+  nodesData.push(_metadata);
 }

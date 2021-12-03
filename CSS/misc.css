@@ -1,0 +1,9 @@
+.highlightText{
+  color:blue;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.highlightText:active{
+  color: red;
+}

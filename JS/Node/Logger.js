@@ -1,6 +1,20 @@
+let LoggerNodeMetadata, LoggerNodeMetaparams;
+
+LoggerNodeMetaparams = {
+  nInput : new Metaparameter(paramType.CONSTANT, 1, (val) => val == 1),
+};
+
+LoggerNodeMetadata = new NodeMetadata(
+  "Logger Node",
+  "misc",
+  LoggerNodeMetaparams,
+  (env) => new GLoggerNode(new LoggerNode(env)),
+  "print to the console. the Packet that it receive"
+);
+
 class LoggerNode extends Node{
   constructor(env){
-    super(env);
+    super(env, LoggerNodeMetadata);
 
     this.metaparams = {
       nInput : new Metaparameter(paramType.INTEGER, 1, (val) => val == 1),
@@ -51,9 +65,4 @@ class GLoggerNode extends GNode{
   }
 }
 
-registerNode(
-  "Logger",
-  (env) => new GLoggerNode(new LoggerNode(env)),
-  "misc",
-  "Node to log the data that it receive"
-);
+registerNode(LoggerNodeMetadata);

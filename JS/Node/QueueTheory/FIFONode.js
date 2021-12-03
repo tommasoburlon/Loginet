@@ -1,16 +1,26 @@
+let FIFONodeMetadata, FIFONodeMetaparams;
+
+FIFONodeMetaparams = {
+  nInput          : new Metaparameter(paramType.CONSTANT, 1, (val) => val == 1),
+  nOutput         : new Metaparameter(paramType.CONSTANT, 1, (val) => val == 1),
+  queueSize       : new Metaparameter(paramType.INTEGER, 10, (val) => val >= 1),
+  isInfinite      : new Metaparameter(paramType.BOOLEAN, true, (val) => true),
+  isDeterministic : new Metaparameter(paramType.BOOLEAN, false, (val) => true),
+  lambda          : new Metaparameter(paramType.FLOAT, 1 / 100, (val) => val > 0)
+};
+
+FIFONodeMetadata = new NodeMetadata(
+  "FIFO Queue",
+  "Queue Theory",
+  FIFONodeMetaparams,
+  (env) => new GFIFONode(new FIFONode(env)),
+  "FIFO queue"
+);
 
 class FIFONode extends Node{
   constructor(_env){
-    super(_env);
+    super(_env, FIFONodeMetadata);
 
-    this.metaparams = {
-      nInput          : new Metaparameter(paramType.INTEGER, 1, (val) => val == 1),
-      nOutput         : new Metaparameter(paramType.INTEGER, 1, (val) => val == 1),
-      queueSize       : new Metaparameter(paramType.INTEGER, 10, (val) => val >= 1),
-      isInfinite      : new Metaparameter(paramType.BOOLEAN, true, (val) => true),
-      isDeterministic : new Metaparameter(paramType.BOOLEAN, false, (val) => true),
-      lambda          : new Metaparameter(paramType.FLOAT, 1 / 100, (val) => val > 0)
-    };
     this.queue = new queue();
 
     this.reset();
@@ -90,9 +100,4 @@ class GFIFONode extends GNode{
   }
 }
 
-registerNode(
-  "FIFO queue",
-  (env) => new GFIFONode(new FIFONode(env)),
-  "Queue Theory",
-  ""
-);
+registerNode(FIFONodeMetadata);

@@ -4,6 +4,7 @@
 
 <link rel="stylesheet" href="CSS/sidemenu.css">
 <link rel="stylesheet" href="CSS/sidewindow.css">
+<link rel="stylesheet" href="CSS/misc.css">
 
 <script src = "JS/Algorithm/heap.js"></script>
 <script src = "JS/Algorithm/queue.js"></script>
@@ -46,13 +47,13 @@ window.addEventListener('load', function(){
   sidemenu = new Sidemenu();
   document.body.appendChild(sidemenu.getHTML());
 
-  for(let obj of nodePrototypes){
+  for(let obj of nodesData){
     let path, htmlObject;
     path = (obj.category + "/" + obj.name);
     htmlObject = document.createElement("DIV");
     htmlObject.innerHTML = obj.name;
     htmlObject.addEventListener("click", function(){
-      gui.insertNode(obj.builderFunc(env));
+      gui.insertNode(obj.builder(env));
     });
     sidemenu.insertElement(path, htmlObject);
 

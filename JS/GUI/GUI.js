@@ -1,5 +1,92 @@
 let componentType = {GNODE : 0, GNODE_PIN : 1, WIRE_START : 2, WIRE_END : 3};
 
+function loadNode(sidewindow, node){
+  sidewindow.open();
+
+  while(sidewindow.content.firstChild)
+    sidewindow.content.removeChild(sidewindow.content.firstChild);
+
+  let cnv = document.createElement("CANVAS");
+  cnv.style = "position:relative;width:200px;height:200px;background-color:white;top:20px;border:1px solid; margin:20px";
+  cnv.width = 200;
+  cnv.height = 200;
+
+  sidewindow.content.appendChild(document.createTextNode(node.metadata.name));
+  sidewindow.content.appendChild(document.createElement("BR"));
+  sidewindow.content.appendChild(cnv);
+
+  let preSize, prePos, scale, translation;
+  preSize = new vec3(node.size.x, node.size.y);
+  prePos = new vec3(node.position.x, node.position.y);
+
+  scale = 150 / Math.max(node.size.x, node.size.y);
+  node.size.x *= scale;
+  node.size.y *= scale;
+
+  node.position.x = 0.5 * (200 - node.size.x);
+  node.position.y = 0.5 * (200 - node.size.y);
+
+  node.render(cnv, cnv.getContext("2d"));
+
+  node.size.x = preSize.x;
+  node.size.y = preSize.y;
+  node.position.x = prePos.x;
+  node.position.y = prePos.y;
+
+  sidewindow.content.appendChild(document.createElement("BR"));
+  sidewindow.content.appendChild(document.createElement("BR"));
+  sidewindow.content.appendChild(document.createTextNode(node.metadata.desc));
+
+  for(let key in node.node.params){
+    sidewindow.content.appendChild(document.createElement("BR"));
+    sidewindow.content.appendChild(document.createTextNode(
+      key + ":"
+    ));
+
+    let type = node.metadata.metaparams[key].type, input;
+    if(type == paramType.CONSTANT){
+      input = document.createTextNode(node.node.params[key]);
+    }else if(type == paramType.INTEGER){
+      input = document.createElement("INPUT");
+      input.type = "number";
+      input.value = node.node.params[key];
+    }else if(type == paramType.BOOLEAN){
+      input = document.createElement("INPUT");
+      input.type = "checkbox";
+      input.checked = node.node.params[key];
+    }else if(type == paramType.FLOAT){
+      input = document.createElement("INPUT");
+      input.type = "text";
+      input.value = node.node.params[key];
+    }
+    input.id = key;
+    sidewindow.content.appendChild(input);
+  }
+
+  let saveBtn;
+  saveBtn = document.createElement("A");
+  saveBtn.classList.add("highlightText");
+  saveBtn.appendChild(document.createTextNode("save"));
+  saveBtn.addEventListener("click", () => {
+    for(let key in node.node.params){
+      let type = node.metadata.metaparams[key].type, input;
+      input = document.getElementById(key);
+      if(type == paramType.INTEGER){
+        node.node.params[key] = parseInt(input.value);
+      }else if(type == paramType.BOOLEAN){
+        node.node.params[key] = input.checked;
+      }else if(type == paramType.FLOAT){
+        node.node.params[key] = parseFloat(input.value);
+      }
+      node.node.reload();
+    }
+    loadNode(sidewindow, node);
+  });
+
+  sidewindow.content.appendChild(document.createElement("BR"));
+  sidewindow.content.appendChild(saveBtn);
+}
+
 class Component{
   constructor(type, value, base){
     this.value = value;
@@ -15,6 +102,8 @@ class GUI{
     this.cnv = cnv;
     this.ctx = this.setupCanvas(cnv);
     this.env = env;
+
+    this.mouse = {x : 0, y : 0, t : 0};
 
     this.selectedComponent = [];
 
@@ -115,6 +204,8 @@ class GUI{
   mousemove(evt){
     let pos;
     pos = new vec3(evt.clientX, evt.clientY);
+    this.mouse.x = pos.x;
+    this.mouse.y = pos.y;
 
     for(let o of this.selectedComponent){
       if(o.type == componentType.GNODE)
@@ -139,6 +230,16 @@ class GUI{
 
   mouseup(evt){
     let pos = new vec3(evt.clientX, evt.clientY);
+    this.mouse.x = pos.x;
+    this.mouse.y = pos.y;
+
+    if((new Date()).getTime() - this.mouse.t < 100){
+      sidewindow.close();
+      if(this.selectedComponent.length == 1 && this.selectedComponent[0].type == componentType.GNODE){
+        loadNode(sidewindow, this.selectedComponent[0].value);
+      }
+    }
+
     for(let o of this.selectedComponent){
       if(o.type == componentType.WIRE_START){
         o.value.start.position = pos;
@@ -162,6 +263,9 @@ class GUI{
   mousedown(evt){
     let com, pos, basePos;
     pos  = new vec3(evt.clientX, evt.clientY);
+    this.mouse.x = pos.x;
+    this.mouse.y = pos.y;
+    this.mouse.t = new Date().getTime();
 
     com = this.getPoint(pos);
     if(com != null){
