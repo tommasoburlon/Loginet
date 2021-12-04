@@ -159,11 +159,21 @@ class GNode{
     this.position = new vec3(0, 0);
     this.size = new vec3(100, 100);
 
+    this.metadata = _node.metadata;
+
+    this.reloadPins();
+  }
+
+  reloadPins(){
     this.pins = [];
     for(let i = 0; i < this.node.links.length; i++)
       this.pins.push(new Pin(new vec3(), this, "X_" + i, [1, 1]));
+    this.setPins();
+    this.node.reload();
+  }
 
-    this.metadata = _node.metadata;
+  setPins(){
+
   }
 
   draw(cnv, ctx){

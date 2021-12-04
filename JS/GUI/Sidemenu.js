@@ -10,6 +10,7 @@ class Sidemenu{
     this.showBtn.id = "bellaaaa";
     this.showBtn.hidden = true;
     this.showBtn.type = "checkbox";
+    this.showBtn.checked = true;
 
     this.btnLabel = document.createElement("LABEL");
     this.btnLabel.htmlFor = this.showBtn.id;

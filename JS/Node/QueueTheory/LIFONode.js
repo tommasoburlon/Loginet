@@ -51,11 +51,15 @@ class GLIFONode extends GNode{
     super(_node);
 
     this.size = new vec3(100, 200);
+    this.setPins();
+  }
+
+  setPins(){
     this.pins[0].position = new vec3(0, 0);
     this.pins[0].nameLocation = [1, 1];
     this.pins[0].name = "in";
 
-    this.pins[1].position = new vec3(100, 0);
+    this.pins[1].position = new vec3(this.size.x, 0);
     this.pins[1].nameLocation = [-1, 1];
     this.pins[1].name = "out";
   }
@@ -95,7 +99,7 @@ class GLIFONode extends GNode{
 
     if(!this.node.params.isInfinite){
       ctx.fillStyle = "yellow";
-      ctx.fillRect(ratio * this.size.x, 0, -(this.node.queue.size() / this.node.params.queueSize) * ratio * this.size.x, this.size.y);
+      ctx.fillRect(0, this.size.y, this.size.x, -ratio * this.size.y * this.node.queue.size() / this.node.params.queueSize);
 
       let cols = 6;
       for(let i = 1; i < cols; i++){

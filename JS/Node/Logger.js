@@ -34,7 +34,11 @@ class GLoggerNode extends GNode{
 
     this.size = new vec3(50.0, 50.0);
     this.position = new vec3(20.0, 20.0);
-    this.pins[0].position = new vec3(0.0, 25.0);
+    this.setPins();
+  }
+
+  setPins(){
+    this.pins[0].position = new vec3(0.0, 0.5 * this.size.y);
     this.pins[0].nameLocation = [-1, 1];
   }
 

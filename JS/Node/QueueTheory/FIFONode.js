@@ -51,11 +51,15 @@ class GFIFONode extends GNode{
     super(_node);
 
     this.size = new vec3(200, 100);
-    this.pins[0].position = new vec3(0,   50);
+    this.setPins();
+  }
+
+  setPins(){
+    this.pins[0].position = new vec3(0, 0.5 * this.size.y);
     this.pins[0].nameLocation = [-1, 1];
     this.pins[0].name = "in";
 
-    this.pins[1].position = new vec3(200, 50);
+    this.pins[1].position = new vec3(this.size.x, 0.5 * this.size.y);
     this.pins[1].nameLocation = [1, 1];
     this.pins[1].name = "out";
   }

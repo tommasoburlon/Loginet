@@ -26,6 +26,8 @@ function loadNode(sidewindow, node){
   node.position.x = 0.5 * (200 - node.size.x);
   node.position.y = 0.5 * (200 - node.size.y);
 
+  node.setPins();
+
   node.render(cnv, cnv.getContext("2d"));
 
   node.size.x = preSize.x;
@@ -33,6 +35,8 @@ function loadNode(sidewindow, node){
   node.position.x = prePos.x;
   node.position.y = prePos.y;
 
+  node.setPins();
+  
   sidewindow.content.appendChild(document.createElement("BR"));
   sidewindow.content.appendChild(document.createElement("BR"));
   sidewindow.content.appendChild(document.createTextNode(node.metadata.desc));
@@ -78,6 +82,7 @@ function loadNode(sidewindow, node){
       }else if(type == paramType.FLOAT){
         node.node.params[key] = parseFloat(input.value);
       }
+      node.reloadPins();
       node.node.reload();
     }
     loadNode(sidewindow, node);
