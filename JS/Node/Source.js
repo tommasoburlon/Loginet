@@ -24,7 +24,7 @@ class SourceNode extends Node{
     this.sendPacket(-1, {type : 0}, this.params.T);
 
     for(let i = 0; i < this.params.nOutput; i++)
-      this.sendPacket(i, {value : 500}, this.params.T);
+      this.sendPacket(i, {symtime : this.env.globalTime}, this.params.T);
   }
 
   init(){

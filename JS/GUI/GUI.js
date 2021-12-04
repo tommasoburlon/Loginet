@@ -86,6 +86,7 @@ function loadNode(sidewindow, node){
       node.node.reload();
     }
     loadNode(sidewindow, node);
+    node.updateNode();
   });
 
   sidewindow.content.appendChild(document.createElement("BR"));

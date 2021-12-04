@@ -51,6 +51,7 @@ class Environment{
   }
 
   reset(){
+    this.globalTime = 0;
     this.queue.clear();
     for(let o of this.nodes)
       o.init();

@@ -168,6 +168,8 @@ class GNode{
     this.metadata = _node.metadata;
 
     this.reloadPins();
+
+    this.updateNode();
   }
 
   reloadPins(){
@@ -229,6 +231,9 @@ class GNode{
       this.disconnectPin(i);
   }
 
+
+  updateNode(){
+  }
 }
 
 let nodesData = [];

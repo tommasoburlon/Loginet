@@ -8,7 +8,9 @@ class stack{
   }
 
   pop(){
+    let ret = this.top();
     this.data.pop();
+    return ret;
   }
 
   top(){
