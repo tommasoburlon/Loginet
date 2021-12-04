@@ -36,7 +36,7 @@ function loadNode(sidewindow, node){
   node.position.y = prePos.y;
 
   node.setPins();
-  
+
   sidewindow.content.appendChild(document.createElement("BR"));
   sidewindow.content.appendChild(document.createElement("BR"));
   sidewindow.content.appendChild(document.createTextNode(node.metadata.desc));
@@ -109,10 +109,13 @@ class GUI{
     this.env = env;
 
     this.mouse = {x : 0, y : 0, t : 0};
+    this.keyboard = {};
 
     this.selectedComponent = [];
 
     window.addEventListener("mousemove", this.mousemove.bind(this));
+    window.addEventListener("keydown", this.keydown.bind(this));
+    window.addEventListener("keyup", this.keyup.bind(this));
     this.cnv.addEventListener("mouseup",   this.mouseup.bind(this));
     this.cnv.addEventListener("mousedown", this.mousedown.bind(this));
 
@@ -142,13 +145,17 @@ class GUI{
     if(this.interval)
       return;
     this.preT = new Date().getTime();
-    this.env.reset();
     this.interval = setInterval(this.execute.bind(this), 0);
   }
 
   stop(){
     clearInterval(this.interval);
     this.interval = undefined;
+  }
+
+  reset(){
+    this.env.reset();
+    this.stop();
   }
 
   insertNode(n){
@@ -301,6 +308,32 @@ class GUI{
       com.relPos = VMath.subv3(pos, com.value.position);
       this.selectedComponent = [com];
     }
+  }
+
+  keydown(evt){
+    this.keyboard[evt.keyCode] = true;
+
+    if(evt.keyCode == 46){
+      for(let o of this.selectedComponent){
+        if(o.type == componentType.GNODE){
+          o.value.disconnectAll();
+          o.value.node.env.removeNode(o.value);
+
+          let idx = this.gnodes.indexOf(this.value);
+          this.gnodes[idx] = this.gnodes[this.gnodes.length - 1];
+          this.gnodes.pop();
+        }else if(o.type == componentType.WIRE_START || o.type == componentType.WIRE_END){
+          o.value.disconnectPins();
+          let idx = this.wires.indexOf(o.value);
+          this.wires[idx] = this.wires[this.wires.length - 1];
+          this.wires.pop();
+        }
+      }
+    }
+  }
+
+  keyup(evt){
+    this.keyboard[evt.keyCode] = false;
   }
 
 }

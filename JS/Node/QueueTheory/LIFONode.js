@@ -1,8 +1,6 @@
 let LIFONodeMetadata, LIFONodeMetaparams;
 
 LIFONodeMetaparams = {
-  nInput          : new Metaparameter(paramType.INTEGER, 1, (val) => val == 1),
-  nOutput         : new Metaparameter(paramType.INTEGER, 1, (val) => val == 1),
   queueSize       : new Metaparameter(paramType.INTEGER, 10, (val) => val >= 1),
   isInfinite      : new Metaparameter(paramType.BOOLEAN, true, (val) => true),
   isDeterministic : new Metaparameter(paramType.BOOLEAN, false, (val) => true),
@@ -12,7 +10,7 @@ LIFONodeMetaparams = {
 LIFONodeMetadata = new NodeMetadata(
   "LIFO Queue",
   "Queue Theory",
-  FIFONodeMetaparams,
+  LIFONodeMetaparams,
   (env) => new GLIFONode(new LIFONode(env)),
   "LIFO queue"
 );
@@ -26,20 +24,25 @@ class LIFONode extends Node{
     this.reset();
   }
 
+  getNumberLinks(){ return this.params.isDeterministic ? 3 : 2; }
+
   update(gateIdx, pkt){
     if(gateIdx == 0 && (this.queue.size() < this.params.queueSize || this.params.isInfinite)){
       this.queue.push(pkt);
-    }else if(gateIdx == -1){
+    }else if(gateIdx == -1 || gateIdx == 2){
       if(!this.queue.empty() && this.getLinkedNode(1))
         this.sendPacket(1, this.queue.pop(), 0);
 
-      this.sendPacket(-1, {}, - Math.log(1 - Math.random()) / this.params.lambda);
+      if(!this.params.isDeterministic)
+        this.sendPacket(-1, {}, - Math.log(1 - Math.random()) / this.params.lambda);
     }
   }
 
   init(){
     this.queue = new stack();
-    this.sendPacket(-1, {}, - Math.log(1 - Math.random()) / this.params.lambda);
+
+    if(!this.params.isDeterministic)
+      this.sendPacket(-1, {}, - Math.log(1 - Math.random()) / this.params.lambda);
   }
 
   onLinkUpdate(idx){
@@ -55,6 +58,8 @@ class GLIFONode extends GNode{
   }
 
   setPins(){
+    let ratio = 0.75;
+
     this.pins[0].position = new vec3(0, 0);
     this.pins[0].nameLocation = [1, 1];
     this.pins[0].name = "in";
@@ -62,6 +67,12 @@ class GLIFONode extends GNode{
     this.pins[1].position = new vec3(this.size.x, 0);
     this.pins[1].nameLocation = [-1, 1];
     this.pins[1].name = "out";
+
+    if(this.pins.length > 2){
+      this.pins[2].position = new vec3(this.size.x - 0.1 * (1 - ratio) * this.size.y, 0.6 * (1 - ratio) * this.size.y);
+      this.pins[2].nameLocation = [1, 1];
+      this.pins[2].name = "send";
+    }
   }
 
   draw(cnv, ctx){

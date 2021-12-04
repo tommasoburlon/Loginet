@@ -40,7 +40,15 @@ class Environment{
       this.executeNext();
   }
 
-  insertNode(n){ this.nodes.push(n); }
+  insertNode(n){
+    this.nodes.push(n);
+  }
+
+  removeNode(n){
+    let idx = this.nodes.indexOf(n);
+    this.nodes[idx] = this.nodes[this.nodes.length - 1];
+    this.nodes.pop();
+  }
 
   reset(){
     this.queue.clear();

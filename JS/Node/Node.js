@@ -1,10 +1,11 @@
 let paramType = {INTEGER : 0, FLOAT : 1, BOOLEAN : 2, CHAR : 3, ARRAY : 4, OBJECT : 5, CODE : 6, CONSTANT : 7};
 
 class Metaparameter{
-  constructor(_type, _def, _isOk){
+  constructor(_type, _def, _isOk = (val) => true, _isActive = (params) => true){
     this.type = _type
     this.def = _def;
     this.isOk = _isOk;
+    this.isActive = _isActive;
   }
 }
 
@@ -50,10 +51,15 @@ class Node{
     for(let i in this.metadata.metaparams)
       this.params[i] = this.metadata.metaparams[i].def;
     this.resetLinks();
+    this.init();
   }
 
   reload(){
     this.resetLinks();
+  }
+
+  getNumberLinks(){
+    return (this.params.nInput || 0) + (this.params.nOutput || 0);
   }
 
   resetLinks(){
@@ -61,7 +67,7 @@ class Node{
       this.disconnect(i);
     }
 
-    this.links = new Array((this.params.nInput || 0) + (this.params.nOutput || 0));
+    this.links = new Array(this.getNumberLinks());
 
     for(let i in this.links)
       this.links[i] = undefined;
@@ -201,6 +207,26 @@ class GNode{
 
     for(let o of this.pins)
       o.render(cnv, ctx, this);
+  }
+
+  disconnectPin(pinIdx){
+    this.node.disconnect(pinIdx);
+
+    let prePin = this.pins[pinIdx];
+    this.pins[pinIdx] = new Pin(
+      new vec3(prePin.position.x, prePin.position.y),
+      this,
+      prePin.name,
+      prePin.nameLocation
+    );
+    prePin.name = "";
+    prePin.position = prePin.getAbsPosition();
+    prePin.parent = undefined;
+  }
+
+  disconnectAll(){
+    for(let i = 0; i < this.pins.length; i++)
+      this.disconnectPin(i);
   }
 
 }
