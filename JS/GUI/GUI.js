@@ -62,7 +62,21 @@ function loadNode(sidewindow, node){
       input = document.createElement("INPUT");
       input.type = "text";
       input.value = node.node.params[key];
+    }else if(type == paramType.ENUM){
+      input = document.createElement("SELECT");
+      input.type = "text";
+
+      let options = node.metadata.metaparams[key].isOk();
+      for(let o of options){
+        let el = document.createElement("OPTION");
+        el.innerHTML = o;
+        if(o == node.node.params[key])
+          el.selected = true;
+        input.appendChild(el);
+      }
+      //input.value = node.node.params[key];
     }
+
     input.id = key;
     sidewindow.content.appendChild(input);
   }
@@ -81,12 +95,14 @@ function loadNode(sidewindow, node){
         node.node.params[key] = input.checked;
       }else if(type == paramType.FLOAT){
         node.node.params[key] = parseFloat(input.value);
+      }else if(type == paramType.ENUM){
+        node.node.params[key] = (input.value);
       }
-      node.reloadPins();
-      node.node.reload();
     }
-    loadNode(sidewindow, node);
     node.updateNode();
+    node.node.reload();
+    node.reloadPins();
+    loadNode(sidewindow, node);
   });
 
   sidewindow.content.appendChild(document.createElement("BR"));
@@ -249,7 +265,9 @@ class GUI{
     if((new Date()).getTime() - this.mouse.t < 100){
       sidewindow.close();
       if(this.selectedComponent.length == 1 && this.selectedComponent[0].type == componentType.GNODE){
-        loadNode(sidewindow, this.selectedComponent[0].value);
+
+        if(this.selectedComponent[0].value.onClick(pos))
+          loadNode(sidewindow, this.selectedComponent[0].value);
       }
     }
 

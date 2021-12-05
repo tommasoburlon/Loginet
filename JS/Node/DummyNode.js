@@ -43,6 +43,11 @@ class DummyNode extends Node{
   onLinkUpdate(idx){
 
   }
+
+  // this handler is called when the params of the node is changed
+  updateNode(){
+
+  }
 }
 
 // Graphical part of the node

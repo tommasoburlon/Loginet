@@ -27,12 +27,12 @@ class Environment{
     let res, n, idx;
     do{
       res = this.queue.pop();
-      if(res.link && res.link.exist){
+      if(res && res.link && res.link.exist){
         n =   res.direction == 1 ? res.link.n2 : res.link.n1;
         idx = res.direction == 1 ? res.link.idx2 : res.link.idx1;
         n.update(idx, res.packet);
       }
-    }while(!res.link.exist);
+    }while(!this.queue.empty() && (!res || !res.link || !res.link.exist));
   }
 
   execute(){

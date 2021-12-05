@@ -112,9 +112,8 @@ class GPrinterNode extends GNode{
     this.pins[1].nameLocation = [1, 1];
   }
 
-  updateNode(){
+  onParamChange(){
     this.size = new vec3(this.node.params.width, this.node.params.height);
-    this.setPins();
   }
 
 }

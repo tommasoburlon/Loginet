@@ -19,8 +19,6 @@ class FIFONode extends Node{
   constructor(_env){
     super(_env, FIFONodeMetadata);
 
-    this.queue = new queue();
-
     this.reset();
   }
 

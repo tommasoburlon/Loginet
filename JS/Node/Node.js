@@ -1,4 +1,14 @@
-let paramType = {INTEGER : 0, FLOAT : 1, BOOLEAN : 2, CHAR : 3, ARRAY : 4, OBJECT : 5, CODE : 6, CONSTANT : 7};
+let paramType = {
+  INTEGER : 0,
+  FLOAT : 1,
+  BOOLEAN : 2,
+  CHAR : 3,
+  ARRAY : 4,
+  OBJECT : 5,
+  CODE : 6,
+  CONSTANT : 7,
+  ENUM : 8
+};
 
 class Metaparameter{
   constructor(_type, _def, _isOk = (val) => true, _isActive = (params) => true){
@@ -108,6 +118,10 @@ class Node{
 
   }
 
+  updateNode(){
+
+  }
+  
   onLinkUpdate(idx){
 
   }
@@ -157,6 +171,7 @@ class Pin{
   getAbsPosition(){
     return VMath.addv3(this.position, this.parent ? this.parent.position : new vec3());
   }
+
 }
 
 class GNode{
@@ -231,8 +246,18 @@ class GNode{
       this.disconnectPin(i);
   }
 
-
   updateNode(){
+    this.onParamChange();
+    this.node.updateNode();
+    this.setPins();
+  }
+
+  onParamChange(){
+
+  }
+
+  onClick(pos){
+    return 1;
   }
 }
 
