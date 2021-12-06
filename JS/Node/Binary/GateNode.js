@@ -2,7 +2,7 @@ let GateNodeMetadata, GateNodeMetaparams;
 
 //  Metaparameters of the node (type of the param, default value, function to check the validity, function to check if the param have effect on the node)
 GateNodeMetaparams = {
-  nInput   : new Metaparameter(paramType.CONSTANT, 2, (val) => val >= 2),
+  nInput   : new Metaparameter(paramType.INTEGER, 2, (val) => val >= 2),
   gateType : new Metaparameter(paramType.ENUM, "AND", (val) => ["AND", "OR", "XOR"]),
   delay    : new Metaparameter(paramType.INTEGER, 0, (val) => val >= 0),
 };
@@ -87,9 +87,72 @@ class GGateNode extends GNode{
   }
 
   //draw function
-  /*draw(cnv, ctx){
+  draw(cnv, ctx){
+    ctx.fillStyle = "rgb(220, 220, 220)";
+    ctx.strokeStyle = "black";
 
-  }*/
+    for(let i = 0; i < this.pins.length - 1; i++){
+      ctx.beginPath();
+      ctx.moveTo(this.pins[i].position.x, this.pins[i].position.y);
+      ctx.lineTo(this.pins[i].position.x + this.size.x * 0.2, this.pins[i].position.y);
+      ctx.stroke();
+    }
+
+    ctx.beginPath();
+    ctx.moveTo(this.size.x, 0.5 * this.size.y);
+    ctx.lineTo(this.size.x - this.size.x * 0.25, 0.5 * this.size.y);
+    ctx.stroke();
+
+    ctx.save();
+
+    if(this.node.params.gateType == "AND" || this.node.params.gateType == "NAND"){
+      ctx.beginPath();
+      ctx.moveTo(0.5 * this.size.x, 0);
+      ctx.lineTo(0.2 * this.size.x, 0);
+      ctx.lineTo(0.2 * this.size.x, this.size.y);
+      ctx.lineTo(0.5 * this.size.x, this.size.y);
+      ctx.bezierCurveTo(this.size.x, this.size.y, this.size.x, 0, 0.5 * this.size.x, 0);
+      ctx.stroke();
+      ctx.fill();
+    }
+
+    if(this.node.params.gateType == "OR" || this.node.params.gateType == "NOR"){
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.bezierCurveTo(0.3 * this.size.x, this.size.y * 0.2, 0.3 * this.size.x, this.size.y * 0.8, 0, this.size.y);
+      ctx.bezierCurveTo(0.5 * this.size.x, this.size.y, 0.6 * this.size.x, this.size.y, this.size.x, 0.5 * this.size.y);
+      ctx.bezierCurveTo(0.6 * this.size.x, 0, 0.5 * this.size.x, 0, 0, 0);
+      ctx.stroke();
+      ctx.fill();
+    }
+
+    if(this.node.params.gateType == "XOR" || this.node.params.gateType == "XNOR"){
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.bezierCurveTo(0.3 * this.size.x, this.size.y * 0.2, 0.3 * this.size.x, this.size.y * 0.8, 0, this.size.y);
+      ctx.lineTo(0,this.size.y);
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.moveTo(0.1 * this.size.x, 0);
+      ctx.bezierCurveTo(0.4 * this.size.x, this.size.y * 0.2, 0.4 * this.size.x, this.size.y * 0.8, 0.1 * this.size.x, this.size.y);
+      ctx.bezierCurveTo(0.6 * this.size.x, this.size.y, 0.7 * this.size.x, this.size.y, this.size.x, 0.5 * this.size.y);
+      ctx.bezierCurveTo(0.7 * this.size.x, 0, 0.6 * this.size.x, 0, 0.1 * this.size.x, 0);
+      ctx.stroke();
+      ctx.fill();
+    }
+
+    ctx.clip();
+    ctx.fillStyle = "black";
+    ctx.font = "30px Courier New"
+    ctx.textBaseline = "middle";
+
+    if(this.node.params.gateType == "XOR" || this.node.params.gateType == "XNOR")
+      ctx.fillText(this.node.params.gateType, this.size.x * 0.3, this.size.y * 0.5);
+    else
+      ctx.fillText(this.node.params.gateType, this.size.x * 0.25, this.size.y * 0.5);
+    ctx.restore();
+  }
 
   //function to set the position of the pins of the node
   setPins(){

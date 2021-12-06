@@ -100,8 +100,6 @@ function loadNode(sidewindow, node){
       }
     }
     node.updateNode();
-    node.node.reload();
-    node.reloadPins();
     loadNode(sidewindow, node);
   });
 

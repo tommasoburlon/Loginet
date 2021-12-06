@@ -121,7 +121,7 @@ class Node{
   updateNode(){
 
   }
-  
+
   onLinkUpdate(idx){
 
   }
@@ -249,6 +249,8 @@ class GNode{
   updateNode(){
     this.onParamChange();
     this.node.updateNode();
+    this.node.reload();
+    this.reloadPins();
     this.setPins();
   }
 
