@@ -59,9 +59,11 @@ class GateNode extends BinaryNode{
     if(this.params.gateType == "XOR"){
       this.updateCircuit = function(pre, input){
         let ret = new bitarray(1), temp = 0;
-        for(let i in input)
-          temp ^= input[i].get(0);
-        ret.setBit(0, temp);
+        
+        for(let i in input){
+          temp += input[i].get(0);
+        }
+        ret.setBit(0, (temp % 2));
         this.output(0, ret);
       }
     }

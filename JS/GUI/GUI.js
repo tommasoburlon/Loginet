@@ -1,3 +1,5 @@
+// TODO: when a parameter is updated its connections should be restored
+
 let componentType = {GNODE : 0, GNODE_PIN : 1, WIRE_START : 2, WIRE_END : 3};
 
 function loadNode(sidewindow, node){
@@ -47,35 +49,20 @@ function loadNode(sidewindow, node){
       key + ":"
     ));
 
-    let type = node.metadata.metaparams[key].type, input;
-    if(type == paramType.CONSTANT){
-      input = document.createTextNode(node.node.params[key]);
-    }else if(type == paramType.INTEGER){
-      input = document.createElement("INPUT");
-      input.type = "number";
-      input.value = node.node.params[key];
-    }else if(type == paramType.BOOLEAN){
-      input = document.createElement("INPUT");
-      input.type = "checkbox";
-      input.checked = node.node.params[key];
-    }else if(type == paramType.FLOAT){
-      input = document.createElement("INPUT");
-      input.type = "text";
-      input.value = node.node.params[key];
-    }else if(type == paramType.ENUM){
-      input = document.createElement("SELECT");
-      input.type = "text";
+    let input;
+    input = node.metadata.metaparams[key].getDOM(node.node.params, key);
 
-      let options = node.metadata.metaparams[key].isOk();
-      for(let o of options){
-        let el = document.createElement("OPTION");
-        el.innerHTML = o;
-        if(o == node.node.params[key])
-          el.selected = true;
-        input.appendChild(el);
+    input.addEventListener("change", function(){
+      let inputDOM, tempParam = {};
+      for(let key1 in node.node.params){
+        inputDOM = document.getElementById(key1);
+        tempParam[key1] = node.metadata.metaparams[key1].getValue(inputDOM)
       }
-      //input.value = node.node.params[key];
-    }
+      for(let key1 in node.node.params){
+        let inputDOM = document.getElementById(key1);
+        node.metadata.metaparams[key1].onChange(inputDOM, tempParam);
+      }
+    });
 
     input.id = key;
     sidewindow.content.appendChild(input);
@@ -87,17 +74,9 @@ function loadNode(sidewindow, node){
   saveBtn.appendChild(document.createTextNode("save"));
   saveBtn.addEventListener("click", () => {
     for(let key in node.node.params){
-      let type = node.metadata.metaparams[key].type, input;
+      let input;
       input = document.getElementById(key);
-      if(type == paramType.INTEGER){
-        node.node.params[key] = parseInt(input.value);
-      }else if(type == paramType.BOOLEAN){
-        node.node.params[key] = input.checked;
-      }else if(type == paramType.FLOAT){
-        node.node.params[key] = parseFloat(input.value);
-      }else if(type == paramType.ENUM){
-        node.node.params[key] = (input.value);
-      }
+      node.node.params[key] = node.metadata.metaparams[key].getValue(input)
     }
     node.updateNode();
     loadNode(sidewindow, node);
@@ -264,7 +243,7 @@ class GUI{
       sidewindow.close();
       if(this.selectedComponent.length == 1 && this.selectedComponent[0].type == componentType.GNODE){
 
-        if(this.selectedComponent[0].value.onClick(pos))
+        if(this.selectedComponent[0].value.onClick(VMath.subv3(pos, this.selectedComponent[0].value.position)))
           loadNode(sidewindow, this.selectedComponent[0].value);
       }
     }
@@ -336,7 +315,7 @@ class GUI{
           o.value.disconnectAll();
           o.value.node.env.removeNode(o.value);
 
-          let idx = this.gnodes.indexOf(this.value);
+          let idx = this.gnodes.indexOf(o.value);
           this.gnodes[idx] = this.gnodes[this.gnodes.length - 1];
           this.gnodes.pop();
         }else if(o.type == componentType.WIRE_START || o.type == componentType.WIRE_END){
@@ -346,6 +325,7 @@ class GUI{
           this.wires.pop();
         }
       }
+      this.selectedComponent = [];
     }
   }
 

@@ -64,11 +64,13 @@ class GDummyNode extends GNode{
 
   //function to set the position of the pins of the node
   setPins(){
-
+    //this.pins[i].position = new vec3(this.size.x, this.size.y);
+    //this.pins[i].name = "out_" + i;
+    //this.pins[i].nameLocation = [1, 1];
   }
 
   //handler that is called when a parameter is edited
-  updateNode(){
+  onParamChange(){
     this.size = new vec3(100, 100);
   }
 

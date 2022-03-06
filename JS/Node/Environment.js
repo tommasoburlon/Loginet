@@ -10,7 +10,7 @@ class Event{
 
 class Environment{
   constructor(){
-    this.queue = new heap((o1, o2) => {return o1.time > o2.time});
+    this.queue = new heap((o1, o2) => {return o1.time >= o2.time});
     this.nodes = [];
     this.globalTime = 0;
   }
@@ -21,6 +21,7 @@ class Environment{
       this.queue.push(new Event(packet, node.links[gateIdx], node.links[gateIdx].n1 == node ? 1 : -1, this.globalTime + time));
     if(gateIdx == -1)
       this.queue.push(new Event(packet, node.loopback, 1, this.globalTime + time))
+    this.globalTime++;
   }
 
   executeNext(){
@@ -28,6 +29,7 @@ class Environment{
     do{
       res = this.queue.pop();
       if(res && res.link && res.link.exist){
+        res.link.onPacketTransit(res.packet);
         n =   res.direction == 1 ? res.link.n2 : res.link.n1;
         idx = res.direction == 1 ? res.link.idx2 : res.link.idx1;
         n.update(idx, res.packet);

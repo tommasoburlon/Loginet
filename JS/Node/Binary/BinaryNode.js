@@ -14,12 +14,15 @@ class BinaryNode extends Node{
 
     if(!pkt.bin) return;
 
+    if(this.lastInput[gateIdx] && this.lastInput[gateIdx].value == pkt.bin.value && this.lastInput[gateIdx].size == pkt.bin.size) return;
+
     this.newInput[gateIdx] = pkt.bin;
+
+    console.log(this.lastInput[gateIdx], this.newInput[gateIdx]);
 
     this.updateCircuit(this.lastInput, this.newInput);
 
-    for(let i in this.newInput)
-      this.lastInput = this.newInput;
+    this.lastInput[gateIdx] = this.newInput[gateIdx].clone();
   }
 
   updateCircuit(lastIn, input){

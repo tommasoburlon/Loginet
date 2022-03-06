@@ -1,10 +1,10 @@
 let LIFONodeMetadata, LIFONodeMetaparams;
 
 LIFONodeMetaparams = {
-  queueSize       : new Metaparameter(paramType.INTEGER, 10, (val) => val >= 1),
+  queueSize       : new Metaparameter(paramType.INTEGER, 10, (val) => val >= 1, (params) => !params.isInfinite),
   isInfinite      : new Metaparameter(paramType.BOOLEAN, true, (val) => true),
   isDeterministic : new Metaparameter(paramType.BOOLEAN, false, (val) => true),
-  lambda          : new Metaparameter(paramType.FLOAT, 1 / 100, (val) => val > 0)
+  lambda          : new Metaparameter(paramType.FLOAT, 1 / 100, (val) => val > 0, (params) => !params.isDeterministic)
 };
 
 LIFONodeMetadata = new NodeMetadata(

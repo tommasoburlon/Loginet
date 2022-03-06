@@ -12,10 +12,68 @@ let paramType = {
 
 class Metaparameter{
   constructor(_type, _def, _isOk = (val) => true, _isActive = (params) => true){
-    this.type = _type
+    this.type = _type;
     this.def = _def;
     this.isOk = _isOk;
     this.isActive = _isActive;
+  }
+
+  getDOM(params, key){
+    let input, val = params[key];
+    if(this.type == paramType.CONSTANT){
+      input = document.createElement("SPAM");
+      input.appendChild(document.createTextNode(val));
+    }else if(this.type == paramType.INTEGER){
+      input = document.createElement("INPUT");
+      input.type = "number";
+      input.value = val;
+    }else if(this.type == paramType.BOOLEAN){
+      input = document.createElement("INPUT");
+      input.type = "checkbox";
+      input.checked = val;
+    }else if(this.type == paramType.FLOAT){
+      input = document.createElement("INPUT");
+      input.type = "text";
+      input.value = val;
+    }else if(this.type == paramType.ENUM){
+      input = document.createElement("SELECT");
+
+      let options = this.isOk();
+      for(let o of options){
+        let el = document.createElement("OPTION");
+        el.innerHTML = o;
+        if(o == val)
+          el.selected = true;
+        input.appendChild(el);
+      }
+    }
+    this.onChange(input, params);
+    return input;
+  }
+
+  getValue(DOM){
+    let ret;
+    if(this.type == paramType.INTEGER){
+      ret = parseInt(DOM.value);
+    }else if(this.type == paramType.BOOLEAN){
+      ret = DOM.checked;
+    }else if(this.type == paramType.FLOAT){
+      ret = parseFloat(DOM.value);
+    }else if(this.type == paramType.ENUM){
+      ret = (DOM.value);
+    }else if(this.type == paramType.CONSTANT){
+      ret = this.def;
+    }
+    return ret;
+  }
+
+  onChange(DOM, params){
+    let res = this.isActive(params);
+    if(res){
+      DOM.disabled = false;
+    }else{
+      DOM.disabled = true;
+    }
   }
 }
 
@@ -36,6 +94,9 @@ class Link{
     this.n2 = _nodeOut;
     this.idx2 = _idxOut;
     this.exist = true;
+  }
+  onPacketTransit(pkt){
+
   }
 };
 
@@ -140,6 +201,8 @@ class Pin{
     this.parent = _parent;
     this.name = _name;
     this.nameLocation = _loc;
+    this.color = "black";
+    this.nameColor = "black";
   }
 
   render(cnv, ctx){
@@ -149,7 +212,7 @@ class Pin{
     ctx.beginPath();
 
     ctx.strokeStyle = "rgba(0,0,0,0)";
-    ctx.fillStyle = "rgb(0, 0, 0)";
+    ctx.fillStyle = this.color;
 
     ctx.arc(pos.x, pos.y, 5, 0, 2 * Math.PI);
 
@@ -157,7 +220,8 @@ class Pin{
     ctx.fill();
 
     let w, h = 15, txtSize;
-    ctx.strokeStyle = "rgb(0, 0, 0)";
+    ctx.strokeStyle = "rgba(0,0,0,0)";
+    ctx.fillStyle = this.nameColor;
     ctx.font = h + "px Courier New";
     txtSize = ctx.measureText(this.name);
     w = txtSize.width;

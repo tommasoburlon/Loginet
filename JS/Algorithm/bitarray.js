@@ -16,8 +16,15 @@ class bitarray{
       this.reset(idx);
   }
 
+  invert(idx){
+    if(this.get(idx))
+      this.reset(idx);
+    else
+      this.set(idx);
+  }
+
   reset(idx){
-    let mask = ((1n << (this.size + 1n)) - 1n) - (1n << BigInt(idx));
+    let mask = ((1n << (this.size)) - 1n) - (1n << BigInt(idx));
     this.value &= mask;
   }
 
@@ -36,5 +43,11 @@ class bitarray{
     for(let i = this.size - 1n; i >= 0n; i--)
       str += this.get(i);
     return str;
+  }
+
+  clone(){
+    let ret = new bitarray(this.size);
+    ret.value = this.value;
+    return ret;
   }
 }
