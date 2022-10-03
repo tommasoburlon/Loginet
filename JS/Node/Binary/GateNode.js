@@ -1,113 +1,97 @@
-let GateNodeMetadata, GateNodeMetaparams;
-
-//  Metaparameters of the node (type of the param, default value, function to check the validity, function to check if the param have effect on the node)
-GateNodeMetaparams = {
-  nInput   : new Metaparameter(paramType.INTEGER, 2, (val) => val >= 2),
-  gateType : new Metaparameter(paramType.ENUM, "AND", (val) => ["AND", "OR", "XOR"]),
-  delay    : new Metaparameter(paramType.INTEGER, 0, (val) => val >= 0),
-};
-
-// Metadata of the node (Name, category, metaparameters, builder function, description)
-GateNodeMetadata = new NodeMetadata(
-  "Gate Node",
-  "Binary",
-  GateNodeMetaparams,
-  (env) => new GGateNode(new GateNode(env)),
-  "gate node"
-);
-
-//Logic part of the Node
 class GateNode extends BinaryNode{
-  constructor(_env){
-    super(_env, GateNodeMetadata);
 
-    //create the links
-    this.reset();
+  static type = {
+    OR: "OR",
+    AND: "AND",
+    NOR: "NOR",
+    NAND: "NAND",
+    XOR: "XOR",
+    XNOR: "XNOR"
+  };
+
+  static metadata = {
+    name: "Gate Node",
+    path: "binary",
+    desc: "basic binary gate",
+    clone: () => new GateGNode(new GateNode())
+  };
+
+  static metaparams = {
+    ports: new Metaparam()
+      .setType(Metaparam.type.INTEGER)
+      .setDefault(5)
+      .setDomainFunction(() => Domain.Any)
+      .setName("input")
+      .setDescription("number of input"),
+    type: new Metaparam()
+      .setType(Metaparam.type.ENUM)
+      .setDefault(GateNode.type.XOR)
+      .setDomainFunction(() => new FiniteDomain(GateNode.type))
+      .setName("type")
+      .setDescription("logic gate type")
+  };
+
+  onInput(state, params, preInput, input){
+    let ctr = 0;
+    for(let i = 0; i < params.ports; i++)
+      ctr += input.get(i);
+    let out = new bitarray(1);
+
+    if(params.type == GateNode.type.OR || params.type == GateNode.type.NOR)
+      out.setBit(0, ctr > 0);
+    if(params.type == GateNode.type.AND || params.type == GateNode.type.NAND)
+      out.setBit(0, ctr == params.ports);
+    if(params.type == GateNode.type.XOR || params.type == GateNode.type.XNOR)
+      out.setBit(0, ctr % 2 == 1);
+
+    if(params.type == GateNode.type.NOR || params.type == GateNode.type.NAND || params.type == GateNode.type.XNOR)
+      out.invert(0);
+
+    this.updateOutput(out, 0);
+
+    return state;
   }
 
-  // this handler is called when the node receive a packet
-  /*updateCircuit(preInput, input){
-    //this.output(outputID, bitarray);
-  }*/
+  onEvent(state, params, input, event){}
 
-  initCircuit(){
-    this.updateNode();
-  }
-  // this handler is called at the start of the simulation
-  updateNode(){
+  initState(params){ return undefined; }
 
-    if(this.params.gateType == "AND"){
-      this.updateCircuit = function(pre, input){
-        let ret = new bitarray(1), temp = 1;
-        for(let i in input)
-          temp &= input[i].get(0);
-        ret.setBit(0, temp);
-        this.output(0, ret);
-      }
-    }
-
-    if(this.params.gateType == "OR"){
-      this.updateCircuit = function(pre, input){
-        let ret = new bitarray(1), temp = 0;
-        for(let i in input)
-          temp |= input[i].get(0);
-        ret.setBit(0, temp);
-        this.output(0, ret);
-      }
-    }
-
-    if(this.params.gateType == "XOR"){
-      this.updateCircuit = function(pre, input){
-        let ret = new bitarray(1), temp = 0;
-        
-        for(let i in input){
-          temp += input[i].get(0);
-        }
-        ret.setBit(0, (temp % 2));
-        this.output(0, ret);
-      }
-    }
-
-    for(let i in this.lastInput){
-      this.lastInput[i] = new bitarray(1);
-      this.newInput[i] = new bitarray(1);
-    }
-  }
-
-  // should return the number of output link
-  getNumberOutput(){
-    return 1;
-  }
+  getNumberInput(params){ return params.ports;};
+  getNumberOutput(params){ return 1;};
+  getPortSize(idx, params){ return 1; }
 }
 
-// Graphical part of the node
-class GGateNode extends GNode{
-  constructor(_node){
-    super(_node);
+class GateGNode extends DefaultGNode{
+  constructor(n){ super(n); }
 
-    this.setPins();
-  }
+  onParamChange(params){ this.size = new vec2(100, 80 + 15 * params.ports); }
+  onClick(env, state, params, pos){ return true; }
+  onMouseMove(pos){}
+  getPinPosition(idx, params){ return idx == params.ports ? new vec2(this.size.x, this.size.y * 0.5) : new vec2(0, this.size.y * (idx + 1) / (params.ports + 1))}
+  getPinLabel(idx, params){ return idx == params.ports ? "out" : "in_" + idx;}
+  getPinLabelLocation(idx, params){ return idx == params.ports ? [1, 1] : [-1, 1]; }
 
-  //draw function
-  draw(cnv, ctx){
+  draw(cnv, ctx, state, params){
     ctx.fillStyle = "rgb(220, 220, 220)";
     ctx.strokeStyle = "black";
+    ctx.lineWidth = 2;
 
-    for(let i = 0; i < this.pins.length - 1; i++){
+    for(let i = 0; i < this.getNumberPins(params) - 1; i++){
+      let pos = this.getPinPosition(i, params);
       ctx.beginPath();
-      ctx.moveTo(this.pins[i].position.x, this.pins[i].position.y);
-      ctx.lineTo(this.pins[i].position.x + this.size.x * 0.2, this.pins[i].position.y);
+      ctx.moveTo(pos.x, pos.y);
+      ctx.lineTo(pos.x + this.size.x * 0.4, pos.y);
       ctx.stroke();
     }
 
     ctx.beginPath();
     ctx.moveTo(this.size.x, 0.5 * this.size.y);
-    ctx.lineTo(this.size.x - this.size.x * 0.25, 0.5 * this.size.y);
+    ctx.lineTo(this.size.x - this.size.x * 0.4, 0.5 * this.size.y);
     ctx.stroke();
 
     ctx.save();
 
-    if(this.node.params.gateType == "AND" || this.node.params.gateType == "NAND"){
+    if(params.type == GateNode.type.AND || params.type == GateNode.type.NAND){
       ctx.beginPath();
       ctx.moveTo(0.5 * this.size.x, 0);
       ctx.lineTo(0.2 * this.size.x, 0);
@@ -118,7 +102,7 @@ class GGateNode extends GNode{
       ctx.fill();
     }
 
-    if(this.node.params.gateType == "OR" || this.node.params.gateType == "NOR"){
+    if(params.type == GateNode.type.OR || params.type == GateNode.type.NOR){
       ctx.beginPath();
       ctx.moveTo(0, 0);
       ctx.bezierCurveTo(0.3 * this.size.x, this.size.y * 0.2, 0.3 * this.size.x, this.size.y * 0.8, 0, this.size.y);
@@ -128,7 +112,7 @@ class GGateNode extends GNode{
       ctx.fill();
     }
 
-    if(this.node.params.gateType == "XOR" || this.node.params.gateType == "XNOR"){
+    if(params.type == GateNode.type.XOR || params.type == GateNode.type.XNOR){
       ctx.beginPath();
       ctx.moveTo(0, 0);
       ctx.bezierCurveTo(0.3 * this.size.x, this.size.y * 0.2, 0.3 * this.size.x, this.size.y * 0.8, 0, this.size.y);
@@ -149,33 +133,10 @@ class GGateNode extends GNode{
     ctx.font = "30px Courier New"
     ctx.textBaseline = "middle";
 
-    if(this.node.params.gateType == "XOR" || this.node.params.gateType == "XNOR")
-      ctx.fillText(this.node.params.gateType, this.size.x * 0.3, this.size.y * 0.5);
+    if(params.type == GateNode.type.XOR || params.type == GateNode.type.XNOR)
+      ctx.fillText(params.type, this.size.x * 0.3, this.size.y * 0.5);
     else
-      ctx.fillText(this.node.params.gateType, this.size.x * 0.25, this.size.y * 0.5);
+      ctx.fillText(params.type, this.size.x * 0.25, this.size.y * 0.5);
     ctx.restore();
   }
-
-  //function to set the position of the pins of the node
-  setPins(){
-    let N = this.node.getNumberInput();
-    for(let i = 0; i < N; i++){
-      this.pins[i].position = new vec3(0, this.size.y * (i + 1) / (N + 1));
-      this.pins[i].name = "in_" + i;
-      this.pins[i].nameLocation = [-1, 1];
-    }
-    this.pins[N].position = new vec3(this.size.x, 0.5 * this.size.y);
-    this.pins[N].name = "out";
-    this.pins[N].nameLocation = [1, 1];
-  }
-
-
-  //handler that is called when a parameter is edited
-  onParamChange(){
-    this.size = new vec3(100, 80 + 15 * this.node.params.nInput);
-  }
-
 }
-
-// register the node using its metadata so the GUI can be updated
-registerNode(GateNodeMetadata);

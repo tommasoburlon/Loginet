@@ -3,7 +3,7 @@
 <head>
 
 <link rel="stylesheet" href="CSS/sidemenu.css">
-<link rel="stylesheet" href="CSS/sidewindow.css">
+<link rel="stylesheet" href="CSS/window.css">
 <link rel="stylesheet" href="CSS/menubar.css">
 <link rel="stylesheet" href="CSS/misc.css">
 
@@ -11,33 +11,36 @@
 <script src = "JS/Algorithm/queue.js"></script>
 <script src = "JS/Algorithm/stack.js"></script>
 <script src = "JS/Algorithm/bitarray.js"></script>
+<script src = "JS/Algorithm/Range.js"></script>
+<script src = "JS/Algorithm/Domain.js"></script>
+
 
 <script src = "JS/Node/Node.js"></script>
 <script src = "JS/Node/Environment.js"></script>
 
-<script src = "JS/Node/Source.js"></script>
-<script src = "JS/Node/Logger.js"></script>
+<script src = "JS/Node/Utility/LoggerNode.js"></script>
+<script src = "JS/Node/Utility/CopyNode.js"></script>
+<script src = "JS/Node/Utility/MergeNode.js"></script>
+
+<script src = "JS/Node/IO/SourceNode.js"></script>
 
 <script src = "JS/Node/QueueTheory/FIFONode.js"></script>
 <script src = "JS/Node/QueueTheory/LIFONode.js"></script>
 
-<script src = "JS/Node/IO/PrinterNode.js"></script>
-
 <script src = "JS/Node/Binary/BinaryNode.js"></script>
-<script src = "JS/Node/Binary/GateNode.js"></script>
 <script src = "JS/Node/Binary/ButtonNode.js"></script>
 <script src = "JS/Node/Binary/LEDNode.js"></script>
-<script src = "JS/Node/Binary/NotNode.js"></script>
+<script src = "JS/Node/Binary/GateNode.js"></script>
 <script src = "JS/Node/Binary/MemoryNode.js"></script>
-
-<script src = "JS/Node/Utility/CopyNode.js"></script>
-<script src = "JS/Node/Utility/MergerNode.js"></script>
+<script src = "JS/Node/Binary/WrapperNode.js"></script>
+<script src = "JS/Node/Binary/UnwrapperNode.js"></script>
 
 <script src = "JS/Node/Wire.js"></script>
 
 <script src = "JS/GUI/GUI.js"></script>
 <script src = "JS/GUI/Sidemenu.js"></script>
-<script src = "JS/GUI/Sidewindow.js"></script>
+<script src = "JS/GUI/Window.js"></script>
+<script src = "JS/GUI/NodeDisplay.js"></script>
 
 <script src = "JS/GMath/vec.js"></script>
 
@@ -46,9 +49,23 @@
 
 <script>
 
-let env, gui, mouse = {x : 0, y : 0, click : false, clicked : null};
+let env, gui;
+let sidemenu;
+let nodesMetadata = [
+  ButtonNode.metadata,
+  GateNode.metadata,
+  LedNode.metadata,
+  SourceNode.metadata,
+  FIFONode.metadata,
+  LIFONode.metadata,
+  CopyNode.metadata,
+  LoggerNode.metadata,
+  MergeNode.metadata,
+  MemoryNode.metadata,
+  WrapperNode.metadata,
+  UnwrapperNode.metadata
+];
 
-let sidewindow, sidemenu;
 window.addEventListener('load', function(){
   let cnv, c;
 
@@ -57,25 +74,38 @@ window.addEventListener('load', function(){
   env = new Environment();
   gui = new GUI(cnv, env);
 
-  gui.render();
-
   sidemenu = new Sidemenu();
   document.body.appendChild(sidemenu.getHTML());
 
-  for(let obj of nodesData){
-    let path, htmlObject;
-    path = (obj.category + "/" + obj.name);
-    htmlObject = document.createElement("DIV");
-    htmlObject.innerHTML = obj.name;
-    htmlObject.addEventListener("click", function(){
-      gui.insertNode(obj.builder(env));
-    });
-    sidemenu.insertElement(path, htmlObject);
+  gui.render();
+  gui.start();
 
+  let root = document.createElement("menu-scroll");
+  let head = {value: root, children: {}};
+
+  for(let data of nodesMetadata){
+    let path = data.path.split("/");
+    let temp = head;
+    for(let i = 0; i < path.length; i++){
+      if(!temp.children[path[i]]){
+        let obj = document.createElement("menu-item");
+        obj.textContent = path[i];
+        let scroll = document.createElement("menu-scroll");
+        obj.appendChild(scroll);
+        temp.value.appendChild(obj);
+        temp.children[path[i]] = {value: scroll, children: {}};
+      }
+      temp = temp.children[path[i]];
+    }
+    let obj = document.createElement("menu-item");
+    obj.textContent = data.name;
+    temp.value.appendChild(obj);
+
+    obj.addEventListener("click", function(){
+      gui.insertNode(data.clone());
+    })
   }
-
-  sidewindow = new Sidewindow();
-  document.body.appendChild(sidewindow.getHTML());
+  document.getElementById("nodes").appendChild(root);
 });
 
 </script>
@@ -86,12 +116,12 @@ window.addEventListener('load', function(){
 
 <canvas id = "myCanvas" style = "position:absolute; top: 0; left : 0; width : 100%; height : 100%"></canvas>
 
-<div class = "menubar">
-  <div onclick = "gui.start()">></div>
-  <div onclick = "gui.stop()">||</div>
-  <div onclick = "gui.reset()">#</div>
-
-</div>
+<menu-bar>
+  <menu-label onclick = "gui.start()">></menu-label>
+  <menu-label onclick = "gui.stop()">||</menu-label>
+  <menu-label onclick = "gui.reset()">#</menu-label>
+  <menu-label id = "nodes">nodes</menu-label>
+</menu-bar>
 
 
 </body>

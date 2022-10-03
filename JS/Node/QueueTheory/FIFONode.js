@@ -1,83 +1,98 @@
-let FIFONodeMetadata, FIFONodeMetaparams;
-
-FIFONodeMetaparams = {
-  queueSize       : new Metaparameter(paramType.INTEGER, 10, (val) => val >= 1, (params) => !params.isInfinite),
-  isInfinite      : new Metaparameter(paramType.BOOLEAN, true, (val) => true),
-  isDeterministic : new Metaparameter(paramType.BOOLEAN, false, (val) => true),
-  lambda          : new Metaparameter(paramType.FLOAT, 1 / 100, (val) => val > 0, (params) => !params.isDeterministic)
-};
-
-FIFONodeMetadata = new NodeMetadata(
-  "FIFO Queue",
-  "Queue Theory",
-  FIFONodeMetaparams,
-  (env) => new GFIFONode(new FIFONode(env)),
-  "FIFO queue"
-);
-
+//Logic part of the Node
 class FIFONode extends Node{
-  constructor(_env){
-    super(_env, FIFONodeMetadata);
 
-    this.reset();
+  static metadata = {
+    name: "FIFO Queue",
+    path: "queue",
+    desc: "first in first out queue",
+    clone: () => new FIFOGNode(new FIFONode())
+  };
+
+  static metaparams = {
+    size: new Metaparam()
+      .setType(Metaparam.type.INTEGER)
+      .setDefault(10)
+      .setDomainFunction((p) => { return p.isInfinite ? Domain.Empty : Domain.Positive })
+      .setName("queue size")
+      .setDescription("dimension of the queue"),
+    isInfinite: new Metaparam()
+      .setType(Metaparam.type.BOOLEAN)
+      .setDefault(false)
+      .setDomainFunction(() => new FiniteDomain([true, false]))
+      .setName("infinite queue")
+      .setDescription("set to implement an infinite size queue"),
+    isDeterministic: new Metaparam()
+      .setType(Metaparam.type.BOOLEAN)
+      .setDefault(true)
+      .setDomainFunction(() => new FiniteDomain([true, false]))
+      .setName("deterministic queue")
+      .setDescription("set to implement a deterministic queue"),
+    mean: new Metaparam()
+      .setType(Metaparam.type.FLOAT)
+      .setDefault(1000)
+      .setDomainFunction((p) => { return p.isDeterministic ? Domain.Empty : Domain.Positive })
+      .setName("average value")
+      .setDescription("average value of the nagetive exp distribution")
+  };
+
+  constructor(){ super() }
+
+  getDelay(params){ return -Math.log(1 - Math.random()) * params.mean; }
+
+  /* implmentation abstract methods from Node class */
+  getNumberPort(params){ return params.isDeterministic ? 3 : 2; }
+  onStart(env, state, params){
+    if(!params.isDeterministic) env.send(this.loopback, {}, this.getDelay(params));
   }
-
-  getNumberLinks(){ return this.params.isDeterministic ? 3 : 2; }
-
-  update(gateIdx, pkt){
-    if(gateIdx == 0 && (this.queue.size() < this.params.queueSize || this.params.isInfinite)){
-      this.queue.push(pkt);
-    }else if(gateIdx == -1 || gateIdx == 2){
-      if(!this.queue.empty() && this.getLinkedNode(1))
-        this.sendPacket(1, this.queue.pop(), 0);
-
-      if(!this.params.isDeterministic)
-        this.sendPacket(-1, {}, - Math.log(1 - Math.random()) / this.params.lambda);
+  onReceive(env, state, params, port, message){
+    if(port.id == -1 || port.id == 2){
+      if(!state.queue.empty()){
+        env.send(this.ports[1], state.queue.top(), 0);
+        state.queue.pop();
+      }
+      if(!params.isDeterministic)
+        env.send(this.loopback, {}, this.getDelay(params));
+    }else{
+      if(params.isInfinite || params.size > state.queue.size())
+        state.queue.push(message);
     }
+    return state;
   }
-
-  init(){
-    this.queue = new queue();
-
-    if(!this.params.isDeterministic)
-      this.sendPacket(-1, {}, - Math.log(1 - Math.random()) / this.params.lambda);
-  }
-
-  onLinkUpdate(idx){
-  }
+  initState(params){ return {queue: new queue()}; }
+  onPortConnect(port){}
+  onPortDisconnect(port){}
 }
 
-class GFIFONode extends GNode{
-  constructor(_node){
-    super(_node);
+class FIFOGNode extends DefaultGNode{
+  constructor(node){ super(node); }
 
-    this.size = new vec3(200, 100);
-    this.setPins();
+  /* implmentation abstract methods from GNode class */
+  onParamChange(params){ this.size = new vec2(200, 100); this.ratio = 0.75; }
+
+  getPinPosition(idx, params){
+    if(idx == 0) return new vec2(0, this.size.y * 0.5);
+    if(idx == 1) return new vec2(this.size.x, this.size.y * 0.5);
+    if(idx == 2) return new vec2(this.size.x - 0.5 * (1 - this.ratio) * this.size.x, 0.5 * this.size.y + 0.5 * (1 - this.ratio) * this.size.x)
   }
 
-  setPins(){
-    let ratio = 0.75;
-
-    this.pins[0].position = new vec3(0, 0.5 * this.size.y);
-    this.pins[0].nameLocation = [-1, 1];
-    this.pins[0].name = "in";
-
-    this.pins[1].position = new vec3(this.size.x, 0.5 * this.size.y);
-    this.pins[1].nameLocation = [1, 1];
-    this.pins[1].name = "out";
-
-    if(this.pins.length > 2){
-      this.pins[2].position = new vec3(this.size.x - 0.5 * (1 - ratio) * this.size.x, 0.5 * this.size.y + 0.5 * (1 - ratio) * this.size.x);
-      this.pins[2].nameLocation = [1, 0];
-      this.pins[2].name = "send";
-    }
+  getPinLabel(idx, params){
+    if(idx == 0) return "in";
+    if(idx == 1) return "out";
+    if(idx == 2) return "sig";
   }
 
-  draw(cnv, ctx){
+  getPinLabelLocation(idx, params){
+    if(idx == 0) return [-1, 1];
+    if(idx == 1) return [1, 1];
+    if(idx == 2) return [1, -1]
+  }
+
+  draw(cnv, ctx, state, params){
     ctx.fillStyle = "rgb(230, 230, 230)";
     ctx.strokeStyle = "black";
-
-    let ratio = 0.75;
+    ctx.lineWidth = 1;
+    
+    let ratio = this.ratio;
 
     ctx.beginPath();
     ctx.rect(0, 0, ratio * this.size.x, this.size.y);
@@ -94,9 +109,9 @@ class GFIFONode extends GNode{
     let txtSize = ctx.measureText("\u{03BB}");
     ctx.fillText("\u{03BB}", 0.5 * (1 + ratio) * this.size.x - txtSize.width * 0.5, 0.5 * this.size.y + 0.3 * (1 - ratio) * this.size.x);
 
-    if(!this.node.params.isInfinite){
+    if(!params.isInfinite){
       ctx.fillStyle = "yellow";
-      ctx.fillRect(ratio * this.size.x, 0, -(this.node.queue.size() / this.node.params.queueSize) * ratio * this.size.x, this.size.y);
+      ctx.fillRect(ratio * this.size.x, 0, -(state.queue.size() / params.size) * ratio * this.size.x, this.size.y);
 
       let cols = 6;
       for(let i = 1; i < cols; i++){
@@ -112,5 +127,3 @@ class GFIFONode extends GNode{
     }
   }
 }
-
-registerNode(FIFONodeMetadata);

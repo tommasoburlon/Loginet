@@ -1,0 +1,45 @@
+*[name=windowWrapper]{
+  width: fit-content;
+  height: fit-content;
+  position: absolute;
+  border: 1px solid rgb(200, 200, 200);
+  background-color: rgb(255, 255, 255);
+  box-shadow: black 5px 5px 10px -5px;
+  overflow: hidden;
+}
+
+*[name=windowBar]{
+  position: relative;
+  width: 100%;
+  height: 25px;
+  display: inline-flex;
+}
+
+*[name=windowContent]{
+  position: relative;
+  width: 100%;
+  height: fit-content;
+  background-color: rgb(200, 200, 200);
+  padding: 15px;
+}
+
+*[name=windowTitle]{
+  margin-left: 10px;
+  width: -webkit-fill-available;
+}
+
+.windowButton{
+  width: 30px;
+  height: inherit;
+  background-color: rgb(255, 255, 255);
+  text-align: center;
+}
+
+.windowButton:hover{
+  background-color: rgb(240, 240, 240);
+}
+
+*[name=windowBar]>*{
+  align-self: center;
+  user-select: none;
+}

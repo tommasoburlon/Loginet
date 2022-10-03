@@ -1,134 +1,101 @@
-let MemoryNodeMetadata, MemoryNodeMetaparams;
-
-//  Metaparameters of the node (type of the param, default value, function to check the validity, function to check if the param have effect on the node)
-MemoryNodeMetaparams = {
-  nInput   : new Metaparameter(paramType.INTEGER, 1, (val) => val >= 1),
-  type     : new Metaparameter(paramType.ENUM, "SR", (val) => ["SR", "D", "D-flipflop"]),
-  delay    : new Metaparameter(paramType.INTEGER, 0, (val) => val >= 0),
-};
-
-// Metadata of the node (Name, category, metaparameters, builder function, description)
-MemoryNodeMetadata = new NodeMetadata(
-  "Memory Node",
-  "Binary",
-  MemoryNodeMetaparams,
-  (env) => new GMemoryNode(new MemoryNode(env)),
-  "Memory node"
-);
-
-//Logic part of the Node
 class MemoryNode extends BinaryNode{
-  constructor(_env){
-    super(_env, MemoryNodeMetadata);
 
-    //create the links
-    this.reset();
-  }
+  static type = {
+    SR: "SR",
+    D: "D",
+    Dflipflop: "Dflipflop"
+  };
 
-  // this handler is called when the node receive a packet
-  updateCircuit(preInput, input){
-    let nq, q = new bitarray(1);
+  static metadata = {
+    name: "Memory Node",
+    path: "binary",
+    desc: "basic memory gate",
+    clone: () => new MemoryGNode(new MemoryNode())
+  };
 
-    if(this.params.type == "SR"){
-      if(input[0].get(0)){
-        this.state.memory.set(0);
-      }else if(input[1].get(0)){
-        this.state.memory.reset(0);
+  static metaparams = {
+    size: new Metaparam()
+      .setType(Metaparam.type.INTEGER)
+      .setDefault(1)
+      .setDomainFunction(() => Domain.Any)
+      .setName("size")
+      .setDescription("size of input port"),
+    type: new Metaparam()
+      .setType(Metaparam.type.ENUM)
+      .setDefault(MemoryNode.type.SR)
+      .setDomainFunction(() => new FiniteDomain(MemoryNode.type))
+      .setName("type")
+      .setDescription("memory gate type")
+  };
+
+  onInput(state, params, preInput, input){
+    for(let i = 0; i < params.size; i++){
+      if(params.type == MemoryNode.type.SR){
+        if(input.get(i)) state.memory.set(i);
+        if(input.get(i + params.size)) state.memory.unset(i);
       }
-
-      if(input[0].get(0) && input[1].get(0))
-        this.state.memory.setBit(0, Math.floor(2 * Math.random()));
+      if(params.type == MemoryNode.type.D){
+        if(input.get(params.size)) state.memory.setBit(i, input.get(i));
+      }
+      if(params.type == MemoryNode.type.Dflipflop){
+        if(input.get(params.size) && !preInput.get(params.size)) state.memory.setBit(i, input.get(i));
+      }
     }
 
-    if(this.params.type == "D"){
-      if(input[1].get(0))
-        this.state.memory.setBit(0, input[0].get(0));
-    }
+    for(let i = 0; i < params.size; i++)
+      state.memory.setBit(i + params.size, !state.memory.get(i));
 
-    if(this.params.type == "D-flipflop"){
-      if(input[1].get(0) && !preInput[1].get(0))
-        this.state.memory.setBit(0, input[0].get(0));
-    }
+    this.updateOutput(state.memory);
 
-    q = this.state.memory.clone();
-    nq = q.clone();
-    nq.invert(0);
-
-    this.output(0, q);
-    this.output(1, nq);
+    return state;
   }
 
-  initCircuit(){
-    this.updateNode();
-  }
-  // this handler is called at the start of the simulation
-  updateNode(){
-    this.state.memory = new bitarray(1);
-    for(let i = 0; i < this.lastInput.length; i++){
-      this.lastInput[i] = new bitarray(1);
-      this.newInput[i] = new bitarray(1);
-    }
-  }
+  onEvent(state, params, input, event){}
 
-  // should return the number of output link
-  getNumberOutput(){
-    return 2;
-  }
-  getNumberInput(){
-    return 2;
+  initState(params){ return {memory: new bitarray(2 * params.size)}; }
+
+  getNumberInput(params){ return 2;};
+  getNumberOutput(params){ return 2;};
+  getPortSize(idx, params){
+    if(params.type == MemoryNode.type.SR) return params.size;
+    return idx == 0 || idx == 2 || idx == 3 ? params.size : 1;
   }
 }
 
-// Graphical part of the node
-class GMemoryNode extends GNode{
-  constructor(_node){
-    super(_node);
+class MemoryGNode extends DefaultGNode{
+  constructor(n){ super(n); }
 
-    this.setPins();
+  onParamChange(params){ this.size = new vec2(150, 80); }
+  onClick(env, state, params, pos){ return true; }
+  onMouseMove(pos){}
+  getPinPosition(idx, params){
+    switch(idx){
+      case 0: return new vec2(0, this.size.y * 0.3);
+      case 1: return new vec2(0, this.size.y * 0.7);
+      case 2: return new vec2(this.size.x, this.size.y * 0.3);
+      case 3: return new vec2(this.size.x, this.size.y * 0.7);
+    }
+  }
+  getPinLabel(idx, params){
+    let size = params.size;
+
+    if(idx == 2) return "out[" + size + "]";
+    if(idx == 3) return "~out[" + size + "]";
+    if(params.type == MemoryNode.type.SR) return idx == 0 ? "set[" + size + "]" : "reset[" + size + "]";
+    if(params.type == MemoryNode.type.D) return idx == 0 ? "data[" + size + "]" : "enable";
+    if(params.type == MemoryNode.type.Dflipflop) return idx == 0 ? "data[" + size + "]" : "clock";
   }
 
-  //draw function
-  draw(cnv, ctx){
+  getPinLabelLocation(idx, params){ return [idx < 2 ? 1 : -1, idx % 2 == 0 ? 1 : -1]; }
+
+  draw(cnv, ctx, state, params){
     ctx.fillStyle = "rgb(220, 220, 220)";
     ctx.strokeStyle = "black";
+    ctx.lineWidth = 1;
 
     ctx.beginPath();
     ctx.rect(0, 0, this.size.x, this.size.y);
     ctx.stroke();
     ctx.fill();
-
-
   }
-
-  //function to set the position of the pins of the node
-  setPins(){
-    let N = this.node.getNumberInput();
-
-    this.pins[0].position = new vec3(0, 0.2 * this.size.y);
-    this.pins[0].name = this.node.params.type == "SR" ? "set" : "data";
-    this.pins[0].nameLocation = [-1, 1];
-
-    this.pins[1].position = new vec3(0, 0.8 * this.size.y);
-    this.pins[1].name = this.node.params.type == "SR" ? "reset" : "enable";
-    this.pins[1].nameLocation = [-1, 1];
-
-    this.pins[2].position = new vec3(this.size.x, 0.2 * this.size.y);
-    this.pins[2].name = "Q";
-    this.pins[2].nameLocation = [1, 1];
-
-    this.pins[3].position = new vec3(this.size.x, 0.8 * this.size.y);
-    this.pins[3].name = "/Q";
-    this.pins[3].nameLocation = [1, 1];
-
-  }
-
-
-  //handler that is called when a parameter is edited
-  onParamChange(){
-    this.size = new vec3(100, 80 + 15 * this.node.params.nInput);
-  }
-
 }
-
-// register the node using its metadata so the GUI can be updated
-registerNode(MemoryNodeMetadata);

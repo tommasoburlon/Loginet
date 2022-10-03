@@ -1,97 +1,70 @@
-let LEDNodeMetadata, LEDNodeMetaparams;
 
-//  Metaparameters of the node (type of the param, default value, function to check the validity, function to check if the param have effect on the node)
-LEDNodeMetaparams = {
-  delay    : new Metaparameter(paramType.INTEGER, 0, (val) => val >= 0),
-};
+class LedNode extends BinaryNode{
 
-// Metadata of the node (Name, category, metaparameters, builder function, description)
-LEDNodeMetadata = new NodeMetadata(
-  "LED Node",
-  "Binary",
-  LEDNodeMetaparams,
-  (env) => new GLEDNode(new LEDNode(env)),
-  "LED node"
-);
+  static metadata = {
+    name: "LED",
+    path: "binary",
+    desc: "output led",
+    clone: () => new LedGNode(new LedNode())
+  };
 
-//Logic part of the Node
-class LEDNode extends BinaryNode{
-  constructor(_env){
-    super(_env, LEDNodeMetadata);
+  static metaparams = {
+    ports: new Metaparam()
+      .setType(Metaparam.type.INTEGER)
+      .setDefault(5)
+      .setDomainFunction(() => Domain.Any)
+      .setName("leds")
+      .setDescription("number of leds")
+  };
 
-    //create the links
-    this.reset();
-  }
+  constructor(){ super(); }
 
-  // this handler is called when the node receive a packet
-  updateCircuit(preInput, input){
-    //this.output(outputID, bitarray);
-    this.state.input = input[0].get(0)
-  }
+  onInput(state, params, preInput, input){  state.leds.copy(input); }
 
-  // this handler is called at the start of the simulation
-  initCircuit(){
-    this.state.input = 0;
-  }
-
-  updateNode(){
-    for(let i = 0; i < this.lastInput.length; i++){
-      this.lastInput[i] = new bitarray(1);
-      this.newInput[i] = new bitarray(1);
+  initState(params){
+    let state = { leds : new bitarray(params.ports) }
+    for(let i = 0; i < state.leds.size; i++){
+      state.leds.unset(i);
     }
+    return state;
   }
 
-  // should return the number of output link
-  getNumberInput(){
-    return 1;
-  }
+  getNumberInput(params){ return params.ports;};
+  getNumberOutput(params){ return 0;};
+  getPortSize(idx, params){ return 1; }
 }
 
-// Graphical part of the node
-class GLEDNode extends GNode{
-  constructor(_node){
-    super(_node);
 
-    this.setPins();
-  }
+class LedGNode extends DefaultGNode{
+  constructor(node){ super(node); }
 
-  //draw function
-  draw(cnv, ctx){
-    let margin = 0.2 * this.size.x;
+  /* implmentation abstract methods from GNode class */
+  onParamChange(params){ this.size = new vec2(50, params.ports * 50); this.margin = 10; }
+  onClick(env, state, params, pos){ return true; }
 
-    ctx.fillStyle = "rgb(220, 220, 220)";
+  onMouseMove(pos){}
+  getPinPosition(idx, params){ return new vec2(0, this.size.y * (idx + 0.5) / (params.ports)); }
+  getPinLabel(idx, params){return "in_" + idx; }
+  getPinLabelLocation(idx, params){ return [-1, 1]}
+  draw(cnv, ctx, state, params){
+    ctx.lineWidth = 2;
     ctx.strokeStyle = "black";
+    ctx.fillStyle = "rgb(150, 150, 150)";
 
     ctx.beginPath();
     ctx.rect(0, 0, this.size.x, this.size.y);
-    ctx.stroke();
     ctx.fill();
-
-    ctx.fillStyle = (this.node.state.input) ? "yellow" : "rgb(100, 100, 100)";
-
-    ctx.beginPath();
-    ctx.rect(margin, margin, this.size.x - 2 * margin, this.size.y - 2 * margin);
     ctx.stroke();
-    ctx.fill();
-  }
 
-  //function to set the position of the pins of the node
-  setPins(){
-    this.pins[0].position = new vec3(0, 0.5 * this.size.y);
-    this.pins[0].name = "in";
-    this.pins[0].nameLocation = [-1, 1];
-  }
+    let margin = this.margin;
+    for(let i = 0; i < params.ports; i++){
+      ctx.fillStyle = state.leds.get(i) ? "yellow" : "black";
 
-  //handler that is called when a parameter is edited
-  onParamChange(){
-    this.size = new vec3(50, 50);
-  }
-
-  onClick(evt){
-    return 1;
+      ctx.beginPath();
+      ctx.arc(this.size.x * 0.5, (i + 0.5) * this.size.y / (params.ports), 0.5 * (this.size.x - 2 * margin), 0, 2 * Math.PI);
+      ctx.fill();
+      ctx.stroke();
+    }
   }
 
 }
-
-// register the node using its metadata so the GUI can be updated
-registerNode(LEDNodeMetadata);

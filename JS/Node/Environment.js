@@ -1,50 +1,51 @@
 
 class Event{
-  constructor(_packet, _link, _direction, _time = 0){
-    this.time = _time;
-    this.packet = _packet;
-    this.link = _link;
-    this.direction = _direction;
+  constructor(message, port, sendTime, recvTime){
+    this.sendTime = sendTime;
+    this.recvTime = recvTime;
+    this.message = message;
+    this.port = port;
   }
 }
 
 class Environment{
   constructor(){
-    this.queue = new heap((o1, o2) => {return o1.time >= o2.time});
+    this.queue = new heap((o1, o2) => {return o1.recvTime >= o2.recvTime});
     this.nodes = [];
     this.globalTime = 0;
   }
 
-  sendPacket(node, gateIdx, packet, time){
-    let nodeTo = node.getLinkedNode(gateIdx);
-    if(nodeTo)
-      this.queue.push(new Event(packet, node.links[gateIdx], node.links[gateIdx].n1 == node ? 1 : -1, this.globalTime + time));
-    if(gateIdx == -1)
-      this.queue.push(new Event(packet, node.loopback, 1, this.globalTime + time))
-    this.globalTime++;
+  send(port, msg, delay){
+    if(!port.isLinked()) return;
+
+    let recvPort = port.getLinked();
+    this.sendToPort(recvPort, msg, delay);
+  }
+
+  sendToPort(port, msg, delay){
+    this.queue.push(new Event(msg, port, this.globalTime, this.globalTime + delay));
+    this.globalTime += 0.0001;
+    port.onMessageSent(env, msg, this.globalTime + delay);
   }
 
   executeNext(){
-    let res, n, idx;
+    let res, n, idx, executed = false;
     do{
       res = this.queue.pop();
-      if(res && res.link && res.link.exist){
-        res.link.onPacketTransit(res.packet);
-        n =   res.direction == 1 ? res.link.n2 : res.link.n1;
-        idx = res.direction == 1 ? res.link.idx2 : res.link.idx1;
-        n.update(idx, res.packet);
+      if(res){
+        res.port.onMessageArrived(env, res.message, res.sendTime);
+        res.port.parent.receive(this, res.port, res.message);
+        executed = true;
       }
-    }while(!this.queue.empty() && (!res || !res.link || !res.link.exist));
+    }while(!this.queue.empty() && !executed);
   }
 
   execute(){
-    while(this.queue.top() && this.globalTime > this.queue.top().time)
+    while(this.queue.top() && this.globalTime > this.queue.top().recvTime)
       this.executeNext();
   }
 
-  insertNode(n){
-    this.nodes.push(n);
-  }
+  insertNode(n){ this.nodes.push(n); n.start(this); }
 
   removeNode(n){
     let idx = this.nodes.indexOf(n);
@@ -55,7 +56,9 @@ class Environment{
   reset(){
     this.globalTime = 0;
     this.queue.clear();
-    for(let o of this.nodes)
-      o.init();
+    for(let o of this.nodes){
+      o.state = o.init(o.getParams());
+      o.start(this);
+    }
   }
 }

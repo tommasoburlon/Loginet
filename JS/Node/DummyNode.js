@@ -1,80 +1,42 @@
-let DummyNodeMetadata, DummyNodeMetaparams;
-
-//  Metaparameters of the node (type of the param, default value, function to check the validity, function to check if the param have effect on the node)
-DummyNodeMetaparams = {
-  nInput  : new Metaparameter(paramType.CONSTANT, 0, (val) => true),
-  nOutput : new Metaparameter(paramType.CONSTANT, 0, (val) => true)
-};
-
-// Metadata of the node (Name, category, metaparameters, builder function, description)
-DummyNodeMetadata = new NodeMetadata(
-  "Dummy Node",
-  "misc",
-  DummyNodeMetaparams,
-  (env) => new GDummyNode(new DummyNode(env)),
-  "simplest node, example"
-);
-
 //Logic part of the Node
 class DummyNode extends Node{
-  constructor(_env){
-    super(_env, DummyNodeMetadata);
 
-    //create the links
-    this.reset();
-  }
+  static metadata = {
+    name: "DummyNode",
+    path: "misc",
+    desc: "example node",
+    clone: () => new DummyGNode(new DummyNode())
+  };
 
-  // this handler is called when the node receive a packet
-  update(gateIdx, pkt){
-    //this.sendPacket(getOut, Packet, delay);
-  }
+  static metaparams = {
+    ports : new Metaparam()
+      .setType(Metaparam.type.INTEGER)
+      .setDefault(2)
+      .setDomainFunction()
+      .setName("ports")
+      .setDescription("number of ports")
+  };
 
-  // this handler is called at the start of the simulation
-  init(){
+  constructor(){ super() }
 
-  }
-
-  // should return the number of input/output link
-  getNumberLinks(){
-    return (this.params.nInput || 0) + (this.params.nOutput || 0);
-  }
-
-  // this handler is called when a collection is created or desctructed
-  onLinkUpdate(idx){
-
-  }
-
-  // this handler is called when the params of the node is changed
-  updateNode(){
-
-  }
+  /* implmentation abstract methods from Node class */
+  onReceive(env, state, params, port, message){ return state; }
+  initState(params){ return {}; }
+  onPortConnect(port){}
+  onPortDisconnect(port){}
 }
 
-// Graphical part of the node
-class GDummyNode extends GNode{
-  constructor(_node){
-    super(_node);
+class DummyGNode extends GNode{
+  constructor(node){ super(node); }
 
-  }
-
-  //draw function
-  draw(cnv, ctx){
-
-  }
-
-  //function to set the position of the pins of the node
-  setPins(){
-    //this.pins[i].position = new vec3(this.size.x, this.size.y);
-    //this.pins[i].name = "out_" + i;
-    //this.pins[i].nameLocation = [1, 1];
-  }
-
-  //handler that is called when a parameter is edited
-  onParamChange(){
-    this.size = new vec3(100, 100);
-  }
+  /* implmentation abstract methods from GNode class */
+  onParamChange(params){}
+  onClick(env, state, params, pos){}
+  onMouseMove(pos){}
+  getPinPosition(idx, params){}
+  getPinLabel(idx, params){}
+  getPinLabelLocation(idx, params){}
+  isPointInside(pos){}
+  draw(cnv, ctx, state, params){}
 
 }
-
-// register the node using its metadata so the GUI can be updated
-registerNode(DummyNodeMetadata);

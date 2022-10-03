@@ -1,11 +1,8 @@
-
-
 class Wire{
-  constructor(pos = new vec3()){
-    this.link = new Link();
-
-    this.start = new Pin(pos);
-    this.end = new Pin(pos);
+  constructor(pos = new vec2(0, 0)){
+    this.position = new vec2(0, 0);
+    this.start = new Pin().setPosition(pos).setWire(this);
+    this.end = new Pin().setPosition(pos).setWire(this);
     this.points = [];
     this.color = "black";
   }
@@ -27,68 +24,54 @@ class Wire{
     ctx.lineTo(pt.x, pt.y);
     ctx.stroke();
 
-    this.start.render(cnv, ctx);
-    this.end.render(cnv, ctx);
+    if(!this.start.port) this.start.render(cnv, ctx);
+    if(!this.end.port) this.end.render(cnv, ctx);
   }
 
-  disconnectStart(){
-    this.disconnectPins();
-    this.start = new Pin(this.start.getAbsPosition());
-    return this.start;
+  getPin(position){
+    if(this.start.isInside(position))
+      return this.start;
+    if(this.end.isInside(position))
+      return this.end;
+    return null;
   }
 
-  disconnectEnd(){
-    this.disconnectPins();
-    this.end = new Pin(this.end.getAbsPosition());
-    return this.end;
-  }
+  disconnect(env, pin){
+    if(pin == this.start || pin == this.end){
+      if(pin.port){
+        pin.onMessageSent = function(env, message, recvTime){};
+        pin.onMessageArrived = function(env, message, sendTime){};
+      }
+      pin.disconnect(env);
+      pin.setWire(undefined);
+      let new_pin = new Pin().setPosition(pin.getAbsPosition()).setWire(this);
 
-  connectStart(_pin){
-    this.start = _pin;
-    this.connectPins();
-  }
-
-  connectEnd(_pin){
-    this.end = _pin;
-    this.connectPins();
-  }
-
-  connectPins(){
-    if(this.start.parent && this.end.parent){
-      let n1 = this.start.parent, n2 = this.end.parent, idx1, idx2;
-      idx1 = n1.pins.indexOf(this.start);
-      idx2 = n2.pins.indexOf(this.end);
-      n1.node.connect(idx1, n2.node, idx2);
-
-      this.link.onPacketTransit = function(){};
-      this.link = n1.node.links[idx1];
-      this.link.onPacketTransit = function(pkt){
-        this.color = "black";
-        this.start.color = "black";
-        this.end.color = "black";
-        if(pkt.bin && pkt.bin.get && pkt.bin.get(0)){
-          this.color = "yellow";
-          this.start.color = "yellow";
-          this.end.color = "yellow";
-        }
-      }.bind(this);
+      if(this.start == pin)
+        this.start = new_pin;
+      if(this.end == pin)
+        this.end = new_pin;
+      return new_pin;
     }
+    return null;
   }
 
-  disconnectPins(){
-    let n, idx, pin;
-
-    this.start.color = "black";
-    this.end.color = "black";
-    this.color = "black";
-    pin = this.start.parent ? this.start : this.end;
-    if(pin.parent){
-      n = pin.parent;
-      idx = n.pins.indexOf(pin);
-      n.node.disconnect(idx);
-      this.link.onPacketTransit = function(){};
+  connect(env, wire_pin, pin){
+    if((wire_pin == this.start && pin != this.end) || (wire_pin == this.end && pin != this.start)){
+      pin.setWire(this);
+      if(wire_pin == this.start){
+        this.start = pin;
+        this.start.connect(env, this.end);
+      }
+      if(wire_pin == this.end){
+        this.end = pin;
+        this.end.connect(env, this.start);
+      }
+      pin.port.onMessageSent = function(env, message, recvTime){};
+      pin.port.onMessageArrived = function(env, message, sendTime){};
+      return pin;
     }
-  }
 
+    return null;
+  }
 
 }

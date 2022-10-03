@@ -1,119 +1,86 @@
-let ButtonNodeMetadata, ButtonNodeMetaparams;
 
-//  Metaparameters of the node (type of the param, default value, function to check the validity, function to check if the param have effect on the node)
-ButtonNodeMetaparams = {
-  nButton  : new Metaparameter(paramType.INTEGER, 1, (val) => val >= 1),
-  delay    : new Metaparameter(paramType.INTEGER, 0, (val) => val >= 0),
-};
-
-// Metadata of the node (Name, category, metaparameters, builder function, description)
-ButtonNodeMetadata = new NodeMetadata(
-  "Button Node",
-  "Binary",
-  ButtonNodeMetaparams,
-  (env) => new GButtonNode(new ButtonNode(env)),
-  "Button node"
-);
-
-//Logic part of the Node
 class ButtonNode extends BinaryNode{
-  constructor(_env){
-    super(_env, ButtonNodeMetadata);
 
-    //create the links
-    this.reset();
+  static metadata = {
+    name: "Binary Button",
+    path: "binary",
+    desc: "input buttons",
+    clone: () => new ButtonGNode(new ButtonNode())
+  };
+
+  static metaparams = {
+    ports: new Metaparam()
+      .setType(Metaparam.type.INTEGER)
+      .setDefault(5)
+      .setDomainFunction(() => Domain.Any)
+      .setName("ports")
+      .setDescription("number of buttons")
+  };
+
+  constructor(){ super(); }
+
+  onInput(state, params, preInput, input){}
+  onEvent(state, params, input, event){
+    state.buttons.invert(event.id);
+    this.updateOutput(state.buttons.slice(event.id, 1), event.id);
   }
 
-  // this handler is called when the node receive a packet
-  updateCircuit(idx = -1){
-
-    for(let i = 0; i < this.getNumberOutput(); i++){
-      let ret = new bitarray(1);
-      ret.setBit(0, this.state.output.get(i));
-      this.output(i, ret);
+  initState(params){
+    let state = { buttons : new bitarray(params.ports) }
+    for(let i = 0; i < state.buttons.size; i++){
+      state.buttons.unset(i);
     }
+    return state;
   }
 
-  // this handler is called at the start of the simulation
-  initCircuit(){
-    this.state.output = new bitarray(this.params.nButton);
-  }
-
-  updateNode(){
-    this.state.output = new bitarray(this.params.nButton);
-  }
-
-  // should return the number of output link
-  getNumberOutput(){
-    return this.params.nButton;
-  }
+  getNumberInput(params){ return 0;};
+  getNumberOutput(params){ return params.ports;};
+  getPortSize(idx, params){ return 1; }
 }
 
-// Graphical part of the node
-class GButtonNode extends GNode{
-  constructor(_node){
-    super(_node);
 
-    this.setPins();
+class ButtonGNode extends DefaultGNode{
+  constructor(node){ super(node); }
+
+  /* implmentation abstract methods from GNode class */
+  onParamChange(params){ this.size = new vec2(50, params.ports * 50); this.margin = 10; }
+  onClick(env, state, params, pos){
+    let margin = this.margin;
+
+    for(let i = 0; i < params.ports; i++){
+      if(pos.x > margin && pos.x < this.size.x - margin){
+        if(pos.y > margin + i * this.size.y / params.ports && pos.y < (i + 1) * this.size.y / params.ports - margin){
+          this.node.sendEvent(env, state, params, {id: i});
+          return false;
+        }
+      }
+    }
+    return true;
   }
 
-  //draw function
-  draw(cnv, ctx){
-    let margin = 0.2 * this.size.x;
-
-    ctx.fillStyle = "rgb(220, 220, 220)";
+  onMouseMove(pos){}
+  getPinPosition(idx, params){ return new vec2(this.size.x, this.size.y * (idx + 0.5) / (params.ports)); }
+  getPinLabel(idx, params){return "out_" + idx; }
+  getPinLabelLocation(idx, params){ return [1, 1]}
+  draw(cnv, ctx, state, params){
+    ctx.lineWidth = 2;
     ctx.strokeStyle = "black";
+    ctx.fillStyle = "rgb(150, 150, 150)";
 
     ctx.beginPath();
     ctx.rect(0, 0, this.size.x, this.size.y);
-    ctx.stroke();
     ctx.fill();
+    ctx.stroke();
 
-    for(let i = 0; i < this.pins.length; i++){
-      ctx.fillStyle = (this.node.state.output.get(i)) ? "yellow" : "rgb(100, 100, 100)";
+    let margin = this.margin;
+    for(let i = 0; i < params.ports; i++){
+      ctx.fillStyle = state.buttons.get(i) ? "yellow" : "black";
 
       ctx.beginPath();
-      ctx.arc(this.size.x * 0.5, (this.size.y / this.pins.length) * (i + 0.5), 0.5 * this.size.x - margin, 0, 2 * Math.PI);
-      ctx.stroke();
+      ctx.rect(margin, margin + i * this.size.y / params.ports, this.size.x - 2 * margin, this.size.y / params.ports - 2 * margin);
       ctx.fill();
-    }
-  }
-
-  //function to set the position of the pins of the node
-  setPins(){
-    let margin = 0.2 * this.size.x;
-
-    for(let i = 0; i < this.pins.length; i++){
-      this.pins[i].position = new vec3(
-        this.size.x,
-        (this.size.y / this.pins.length) * (i + 0.5)
-      );
-      this.pins[i].name = "out_" + i;
-      this.pins[i].nameLocation = [1, 1];
-    }
-  }
-
-  //handler that is called when a parameter is edited
-  onParamChange(){
-    this.size = new vec3(50, 40 * this.node.params.nButton);
-  }
-
-  onClick(pos){
-    let height = (this.size.y / this.pins.length), width = this.size.x;
-    let dy = pos.y % height, dx = pos.x, idx;
-    idx = Math.floor(pos.y / height);
-
-    if((dy - height * 0.5) * (dy - height * 0.5) + (dx - width * 0.5) * (dx - width * 0.5) < (0.3 * width) * (0.3 * width)){
-      this.node.state.output.invert(idx);
-
-      this.node.updateCircuit();
-      return 0;
-    }else{
-      return 1;
+      ctx.stroke();
     }
   }
 
 }
-
-// register the node using its metadata so the GUI can be updated
-registerNode(ButtonNodeMetadata);

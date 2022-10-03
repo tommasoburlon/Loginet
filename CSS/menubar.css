@@ -1,4 +1,4 @@
-.menubar{
+menu-bar{
   position:absolute;
   top:0;
   left:0;
@@ -8,18 +8,61 @@
   user-select: none;
 }
 
-.menubar > div{
+menu-item, menu-label{
   padding-top: 5px;
   padding-bottom: 5px;
   padding-left: 10px;
   padding-right: 10px;
   background-color: rgb(240,240,240);
+  position: relative;
 }
 
-.menubar > div:hover{
+menu-item {
+  position: relative;
+  min-width: 100px;
+}
+
+menu-item:hover, menu-label:hover{
   background-color: rgb(220,220,220);
 }
 
-.menubar > div:active{
+menu-item:active, menu-label:active{
   background-color: rgb(200,200,200);
+}
+
+menu-label > menu-scroll {
+  top: 100%;
+  left: 0%;
+}
+
+menu-scroll{
+  position: absolute;
+  box-shadow: black 5px 5px 5px -6px;
+}
+
+menu-item > menu-scroll::before{
+    content: "\25B6";
+    position: absolute;
+    left: -5px;
+    align-content: center;
+    transform: translateX(-100%) translateY(50%);
+    display: initial;
+    font-size: 10px;
+}
+
+menu-item > menu-scroll {
+  top: 0%;
+  left: 100%;
+}
+
+menu-scroll > menu-item {
+  display: none;
+}
+
+menu-label:hover > menu-scroll > menu-item{
+  display: grid;
+}
+
+menu-item:hover > menu-scroll > menu-item{
+  display: grid;
 }
